@@ -1,0 +1,333 @@
+// out: style.css, sourcemap: false, compress: true
+
+//@import url(https://fonts.googleapis.com/css?family=Noto+Sans:400,700);
+
+/* COLORS */
+@text-bright: rgba(250, 250, 250, 1);
+@text-brighter: #696F75;
+@text-dark: rgba(10, 10, 10, 1);
+@sidebar-background: #232C35;
+@table-contrast: #fbfdfe;
+
+/* FARBSCHEMA */
+@light-blue: #57acca;
+@light-red: #ca5773;
+
+/* SIZE VARIABLES */
+@sidebar-width: 16em;
+@header-size: 3em;
+
+@font-face {
+  font-family: 'Noto Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: url(/static/font.woff2) format('woff2');
+}
+
+body {
+  font-family: "Noto Sans", "Verdana", "Open Sans", "Arial";
+  margin: 0;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  background: @sidebar-background;
+  width: @sidebar-width;
+  color: @text-brighter;
+  overflow-y:auto;
+
+  .about{
+      margin: 1em;
+      position: relative;
+      top: 50%;
+      transform: translateY(-50%);
+      text-align: center;
+  }
+
+  #groups {
+    padding-left: 1em;
+    padding-top: 1.2em;
+    padding-bottom: 10.5em;
+    font-size: 1.2em;
+    margin-top: -5.4em;
+    background-color: @sidebar-background;
+    text-transform: uppercase;
+
+    ul {
+      text-transform: none;
+      list-style: none;
+      margin: 0;
+      padding: 0em 1em;
+
+      li {
+        a {
+          text-decoration: none;
+          color: @text-brighter;
+          transition: color .3s;
+
+          &:hover {
+            color: @text-bright !important;
+          }
+        }
+      }
+    }
+  }
+
+  #controls {
+    position: fixed;
+    font-size: 1.3em;
+    bottom: 0em;
+    left: 0em;
+    background-color: @sidebar-background;
+    text-transform: uppercase;
+    width: 11em;
+    height: 9em;
+
+    ul {
+      text-transform: capitalize;
+      list-style: none;
+      padding-left:0.5em;
+
+      li {
+          &:first-of-type {
+            border-top: none;
+          }
+        padding: 0.5em 0em;
+        margin: 0 0.5em;
+        font-size: 0.8em !important;
+        border-top: 0.0625em solid @text-brighter;
+
+        a {
+          text-decoration: none;
+          color: @text-brighter;
+          transition: color .3s;
+
+          &:hover {
+            color: @text-bright;
+          }
+        }
+        &.active{
+            a {
+              color: @light-blue;
+            }
+        }
+
+      }
+    }
+  }
+}
+
+
+
+.header {
+  position: fixed;
+  top: 0;
+  left: @sidebar-width;
+  right: 0;
+  height: @header-size;
+  border-bottom: 0.125em solid #f0f0f0;
+  background-color: rgba(255, 255, 255, 0.99);
+
+  ul {
+    list-style: none;;
+    display: inline-flex;
+    margin: 0;
+    padding: 0;
+    text-transform: uppercase;
+
+    li {
+      display: inline;
+      padding: 1em 1.5em;
+
+      a {
+        text-decoration: none;
+        color: @text-dark;
+        transition: color .3s;
+
+        &:hover {
+          color: @light-blue;
+        }
+      }
+
+      &.hasDropDown {
+        padding: 0;
+      }
+    }
+  }
+}
+
+#content {
+  margin-left: @sidebar-width;
+  margin-top: @header-size;
+}
+
+// scale
+
+scale {
+    margin: 3em auto;
+
+    width: 10em;
+    height: 10em;
+    display: block;
+    border-radius:50%;
+    background-color: @light-blue;
+    border: none;
+}
+
+.circle{
+    width:9em;
+    height: 9em;
+    margin-top: -12.5em;
+    margin-left: auto; margin-right: auto;
+    border-radius: 50%;
+    z-index: 2;
+    background-color: @sidebar-background;
+    color:#7F8489;
+    display: flex;
+    align-items: 0.5;
+    justify-content:center;
+    margin-bottom: 2em;
+}
+
+table{
+    border-spacing: 0;
+    border-collapse: separate;
+}
+
+.panel {
+  width: 100%;
+
+    .heading-big {
+      color: @light-blue;
+      text-align: center;
+
+      h3 {
+        border-top: 0.0625em dotted darken(white, 50%);
+        padding-top: 1em;
+      }
+    }
+
+    .assigned, .unassigned {
+
+      &:nth-of-type(2n){background-color: @table-contrast;}
+
+      th {
+        padding-bottom: 1em;
+        text-align: left;
+      }
+
+      td {
+        width: 25%;
+
+        &:first-of-type {
+          width: 0%;
+        }
+      }
+
+      a {
+        text-decoration: none;
+        color: grey;
+
+        &.blue {
+          color: @light-blue;
+        }
+      }
+    }
+
+    .headings-middle {
+       th{
+           background-color: white;
+       }
+       td{
+           background-color: white;
+       }
+       tr{
+           background-color: white;
+       }
+    }
+}
+
+.errors, .notifications{
+    position: fixed;
+    right:0;
+    bottom: -10em;
+    background-color: @sidebar-background;
+    padding:1em;
+    padding-left: 1.5em;
+    color: @text-brighter;
+    border-left: 0.5em solid white;
+    z-index: 1;
+}
+
+.notifications{
+    border-color: @light-blue;
+    animation:fadeOut 5s;opacity:0;
+    @keyframes fadeOut{100%{opacity:0; bottom: 7em;}90%{opacity:.2; bottom: 7em;}50%{opacity:.2; bottom: 7em;}40%{opacity:1; bottom: 7em;}0%{opacity:1; bottom: 7em;}}
+
+    &:hover{
+        cursor: default;
+    }
+}
+
+.errors{
+    bottom: 7em;
+    border-color: @light-red;
+    transition: all 0s ease 9999999s;
+
+    &:active{
+        transition-delay:0s;
+        visibility: visible;
+        opacity: 0;
+        bottom: -10em;
+    }
+
+    &:hover{
+        cursor: pointer;
+    }
+    @keyframes appear{100%{opacity:0;}1%{opacity:0;}0%{opacity:1;}}
+}
+
+//shutdown button
+#shutdown {
+    display: block;
+    position: fixed;
+    top: 0.5em;
+    right: 1em;
+    width: 2em;
+    height: 2em;
+    background-image: url(exit.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-color: @text-brighter;
+    transition: background-color .3s;
+    &:hover{
+        background-color: @light-red;
+        cursor: pointer;
+    }
+}
+
+textarea{
+    margin: 0 !important;
+    width: ~"calc(100% - 70px)" !important;
+    height: 30em;
+    resize: vertical;
+}
+
+.linedwrap{
+    width: ~"calc(100% - 4em)"!important;
+    margin-left: ~"calc(2em - 4px)" !important;
+    margin-top: 5em !important;
+    margin-right: 2em !important;
+
+}
+
+.lineselect{
+    color: @light-red !important;
+    font-weight: bold;
+}
+
+button, select, input{
+    margin: 2em;
+    margin-right: 0;
+}
