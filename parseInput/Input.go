@@ -2,7 +2,7 @@
 package parseInput
 
 import (
-	"GroupMatcher/matching"
+	"github.com/veecue/GroupMatcher/matching"
 	"bufio"
 	"bytes"
 	"errors"

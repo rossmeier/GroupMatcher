@@ -4,8 +4,8 @@ package main
 //TODO: localize font
 
 import (
-	"GroupMatcher/matching"
-	"GroupMatcher/parseInput"
+	"github.com/veecue/GroupMatcher/matching"
+	"github.com/veecue/GroupMatcher/parseInput"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -24,6 +24,7 @@ import (
 	"path"
 	"os/signal"
 	"github.com/tealeg/xlsx"
+	"github.com/asticode/go-astilectron"
 )
 
 // map of all supported languages
@@ -622,9 +623,38 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// start user-GUI on the right URL
-	startBrowser("http://" + listener.Addr().String())
-	log.Fatal(http.Serve(listener, nil))
+	go func() {
+		log.Fatal(http.Serve(listener, nil))
+	}()
+	time.Sleep(time.Millisecond * 10)
+	// Initialize astilectron
+	var a, _ = astilectron.New(astilectron.Options{
+		AppName: "Groupt Matcher",
+		//AppIconDefaultPath: "<your .png icon>",
+		//AppIconDarwinPath:  "<your .icns icon>",
+		BaseDirectoryPath: "cache",
+	})
+	defer a.Close()
+
+	err = a.Start()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Create a new window
+	w, err := a.NewWindow("http://" + listener.Addr().String(), &astilectron.WindowOptions{
+		Center: astilectron.PtrBool(true),
+		Height: astilectron.PtrInt(800),
+		Width:  astilectron.PtrInt(1200),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = w.Create()
+	if err != nil {
+		log.Fatal(err)
+	}
+	a.Wait()
+	exit()
 }
 
 // randomly generate groups and persons for testing
