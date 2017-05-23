@@ -491,9 +491,9 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 
 	// create export panel
 	if exportmode {
-		fmt.Fprint(res, `<div class="panel"><form action="/export" target="_blank">`)
+		fmt.Fprint(res, `<div class="panel"><form action="/export" target="frame_export">`)
 		fmt.Fprintf(res, `<select name="type"><option selected value="gm">GroupMatcher</option><option value="extotal">%s</option><option value="exlimited">%s</select> <button type="submit">%s</button>`, l["extotal"], l["exlimited"],l["export"])
-		fmt.Fprint(res, `</form></div>`)
+		fmt.Fprint(res, `</form><iframe width="1" height="1" name="frame_export" style="distplay:none;"></iframe></div>`)
 	}
 
 	// end document
@@ -640,6 +640,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	// Create a new window
 	w, err := a.NewWindow("http://" + listener.Addr().String(), &astilectron.WindowOptions{
 		Center: astilectron.PtrBool(true),
@@ -649,10 +650,34 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	err = w.Create()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	m := w.NewMenu([]*astilectron.MenuItemOptions{
+		{
+			Label: astilectron.PtrStr("Datei"),
+			SubMenu: []*astilectron.MenuItemOptions{
+				{Label: astilectron.PtrStr("Import")},
+				{Label: astilectron.PtrStr("Export")},
+				{Label: astilectron.PtrStr("Bearbeitungsmodus"), Type: astilectron.MenuItemTypeCheckbox},
+				{Label: astilectron.PtrStr("Beenden"), Role: astilectron.MenuItemRoleQuit},
+			},
+		},
+		{
+			Label: astilectron.PtrStr("Verteilen"),
+			SubMenu: []*astilectron.MenuItemOptions{
+				{Label:astilectron.PtrStr("Löschen")},
+				{Label:astilectron.PtrStr("Verteilen")},
+				{Label:astilectron.PtrStr("Zurücksetzen")},
+			},
+		},
+	})
+
+	m.Create()
+
 	a.Wait()
 	exit()
 }
