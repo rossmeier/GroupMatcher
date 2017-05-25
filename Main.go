@@ -660,8 +660,12 @@ func main() {
 		{
 			Label: astilectron.PtrStr("Datei"),
 			SubMenu: []*astilectron.MenuItemOptions{
-				{Label: astilectron.PtrStr("Import")},
-				{Label: astilectron.PtrStr("Export")},
+				{Label: astilectron.PtrStr("Öffnen")},
+				{Label: astilectron.PtrStr("Speichern")},
+				{Label: astilectron.PtrStr("Exportieren"), SubMenu: []*astilectron.MenuItemOptions{
+					{Label: astilectron.PtrStr("Excel (teilweise)")},
+					{Label: astilectron.PtrStr("Excel (vollständig)")},
+				}},
 				{Label: astilectron.PtrStr("Bearbeitungsmodus"), Type: astilectron.MenuItemTypeCheckbox},
 				{Label: astilectron.PtrStr("Beenden"), Role: astilectron.MenuItemRoleQuit},
 			},
@@ -674,8 +678,25 @@ func main() {
 				{Label:astilectron.PtrStr("Zurücksetzen")},
 			},
 		},
+		{
+			Label: astilectron.PtrStr("Sprache"),
+			SubMenu: func() ([]*astilectron.MenuItemOptions) {
+				o := make([]*astilectron.MenuItemOptions, 0, len(langs))
+				for n, lang := range langs {
+					name := n
+					o = append(o, &astilectron.MenuItemOptions{
+						Label: astilectron.PtrStr(lang["#name"]),
+						Type: astilectron.MenuItemTypeRadio,
+						OnClick: func(e astilectron.Event) bool {
+							l = langs[name]
+							return false
+						},
+					})
+				}
+				return o
+			}(),
+		},
 	})
-
 	m.Create()
 
 	a.Wait()
