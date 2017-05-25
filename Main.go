@@ -4,27 +4,24 @@ package main
 //TODO: localize font
 
 import (
-	"github.com/veecue/GroupMatcher/matching"
-	"github.com/veecue/GroupMatcher/parseInput"
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"github.com/asticode/go-astilectron"
+	"github.com/tealeg/xlsx"
+	"github.com/veecue/GroupMatcher/matching"
+	"github.com/veecue/GroupMatcher/parseInput"
 	"io/ioutil"
 	"log"
 	"math/rand"
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
-	"runtime"
+	"os/signal"
+	"path"
 	"strconv"
 	"strings"
 	"time"
-	"path"
-	"os/signal"
-	"github.com/tealeg/xlsx"
-	"github.com/asticode/go-astilectron"
 )
 
 // map of all supported languages
@@ -39,22 +36,6 @@ var autosafepath = path.Join(os.TempDir(), "gm_autosave.json")
 // current project
 var persons []*matching.Person
 var groups []*matching.Group
-
-// open a browser so that the user is able to interact with the WebGUI
-func startBrowser(url string) error {
-	var err error
-	switch runtime.GOOS { //open browser on localhost in different environments
-	case "linux":
-		err = exec.Command("xdg-open", url).Start()
-	case "windows":
-		err = exec.Command("cmd", "/c", "start", url).Start()
-	}
-	if err == nil {
-		return nil
-	} else {
-		return errors.New("Could not open URL in browser")
-	}
-}
 
 // scan language files from the locales directory and import them into the program
 func initLangs() {
@@ -144,17 +125,6 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 	// parse URL parameters
 	form := req.URL.Query()
 
-	// switch language
-	if form["lang"] != nil {
-		name := form.Get("lang")
-		lang, ok := langs[name]
-		if !ok {
-			errors.WriteString(l["lang_not_found"] + ": " + name + "<br>")
-		} else {
-			l = lang
-		}
-	}
-
 	//generate import mode
 	importmode := false
 	if form["importmode"] != nil {
@@ -208,7 +178,7 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				errors.WriteString(l["group_deleted"] + errGroups + "<br>")
 			}
-			err = m.MatchManyAndTakeBest(50, time.Minute, 10 * time.Second)
+			err = m.MatchManyAndTakeBest(50, time.Minute, 10*time.Second)
 			if err != nil {
 				errors.WriteString(l[err.Error()] + "<br>")
 			}
@@ -216,7 +186,7 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 		} else {
 			if err.Error() == "combination_overfilled" {
 				errors.WriteString(l["combination_overfilled"] + errGroups + "<br>")
-			}else {
+			} else {
 				errors.WriteString(l[err.Error()] + "<br>")
 			}
 		}
@@ -306,11 +276,9 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 		notifications.WriteString(l["cleared"] + "<br>")
 	}
 
-	var exitmode bool
-	if form["exit"] != nil {
-		exitmode = true
-		notifications.WriteString(l["thanks"])
-		errors.WriteString(l["close_now"])
+	var aboutmode bool
+	if form["about"] != nil {
+		aboutmode = true
 	}
 
 	// calculate matching quote for display
@@ -329,26 +297,21 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 	// create menu:
 	if exportmode || importmode || editmode {
 		fmt.Fprintf(res, `<div class="header"><ul><li><a href="/">%s</a></li></ul></li></div>`, l["return"])
-	}else if exitmode {
+	} else if aboutmode {
 		fmt.Fprintf(res, `<div class="header"><ul><li style="text-transform:none;">%s</li><li></ul></li></div>`, "&copy Justus Roßmeier, Christian Obermaier & Max Obermeier")
-	}else{
+	} else {
 		fmt.Fprintf(res, `<div class="header"><ul><li><a href="/?clear">%s</a></li><li><a href="/?reset">%s</a></li><li><a href="/?match">%s</a></li></ul></li></div>`, l["reset"], l["restore"], l["match_selected"])
-	}
-
-	//create exit button
-	if !exitmode {
-		fmt.Fprint(res, `<a href="/?exit"><div id="shutdown"></div></a>`)
 	}
 
 	// sidebar
 	var quoteInDegree float64
-	if quote_value == 0.0{
+	if quote_value == 0.0 {
 		quoteInDegree = 0.0
 	} else {
-		quoteInDegree = (180 - (quote_value-1) * 90)
+		quoteInDegree = (180 - (quote_value-1)*90)
 	}
 	fmt.Fprintf(res, `<div class="sidebar">`)
-	if !exitmode {
+	if !aboutmode {
 		fmt.Fprintf(res, `<scale style="background-image:linear-gradient(%sdeg, transparent 50%%, #2F3840 50%%),linear-gradient(0deg, #2F3840 50%%, transparent 50%%);"></scale>
 			<div class="circle"><h1>%s</h1></div><div id="groups">%s<ul>`, strconv.FormatFloat(quoteInDegree, 'f', 0, 64), strconv.FormatFloat(quote_value, 'f', 2, 64), l["group-overview"])
 		if len(groups) == 0 {
@@ -358,7 +321,7 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 				htmlid := fmt.Sprint("g", i)
 				if (len(group.Members) < group.MinSize || len(group.Members) > group.Capacity) && !matching.AllEmpty(groups) {
 					fmt.Fprintf(res, `<li><a style="color: #ca5773" href="#%s">%s</a></li>`, htmlid, group.Name)
-				}else{
+				} else {
 					fmt.Fprintf(res, `<li><a href="#%s">%s</a></li>`, htmlid, group.Name)
 				}
 			}
@@ -366,29 +329,29 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 		}
 		if importmode {
 			fmt.Fprintf(res, `</ul></div><div id="controls"><ul><li><a href="?edit">%s</a></li><li class ="active"><a href="?importmode">%s</a></li><li><a href="?exportmode">%s</a></li><li>`, l["edit"], l["import"], l["export"])
-		}else if exportmode {
+		} else if exportmode {
 			fmt.Fprintf(res, `</ul></div><div id="controls"><ul><li><a href="?edit">%s</a></li><li><a href="?importmode">%s</a></li><li class ="active"><a href="?exportmode">%s</a></li><li>`, l["edit"], l["import"], l["export"])
-		}else if editmode {
+		} else if editmode {
 			fmt.Fprintf(res, `</ul></div><div id="controls"><ul><li class ="active"><a href="?edit">%s</a></li><li><a href="?importmode">%s</a></li><li><a href="?exportmode">%s</a></li><li>`, l["edit"], l["import"], l["export"])
-		}else {
+		} else {
 			fmt.Fprintf(res, `</ul></div><div id="controls"><ul><li><a href="?edit">%s</a></li><li><a href="?importmode">%s</a></li><li><a href="?exportmode">%s</a></li><li>`, l["edit"], l["import"], l["export"])
 		}
 		printSeperator := false
 		for langname, lang := range langs {
 			if printSeperator {
 				fmt.Fprint(res, ` | `)
-			}else{
+			} else {
 				printSeperator = true
 			}
 			fmt.Fprintf(res, `<a href="?lang=%s">%s</a>`, langname, lang["#name"])
 		}
 		fmt.Fprint(res, `</li></ul></div>`)
-	}else{
-		fmt.Fprintf(res,`<div class="about">%s</div>`,l["about"])
+	} else {
+		fmt.Fprintf(res, `<div class="about">%s</div>`, l["about"])
 	}
-	fmt.Fprint(res,`</div>`)
+	fmt.Fprint(res, `</div>`)
 
-	if !exitmode {
+	if !aboutmode {
 		fmt.Fprint(res, `<div id="content">`)
 		// print notifications and errors:
 		if errors.Len() > 0 {
@@ -397,18 +360,9 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 		if notifications.Len() > 0 {
 			fmt.Fprintf(res, `<div class="notifications">%s</div>`, notifications.String())
 		}
-	}else{
-		// print notifications and errors:
-		if errors.Len() > 0 {
-			fmt.Fprintf(res, `<div class="errors" style="animation:appear 5s;opacity:1;">%s</div>`, errors.String())
-		}
-		if notifications.Len() > 0 {
-			fmt.Fprintf(res, `<div class="notifications">%s</div>`, notifications.String())
-		}
 	}
 
-
-	if !exitmode {
+	if !aboutmode {
 		fmt.Fprint(res, `<div id="panels">`)
 		// list unassigned persons:
 		if !editmode && !importmode && !exportmode {
@@ -469,10 +423,9 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 				fmt.Fprint(res, "</table>")
 			}
 		}
-	}else{
+	} else {
 		fmt.Fprint(res, `<div id="content" style="width: calc(100% - 16em); height: calc(100vh - 3em - 2px); background-image:url(static/logo.png);background-repeat:no-repeat; background-size:80% auto; background-position:center center; opacity:0.8;"`)
 	}
-
 
 	// display editmode panel with texbox
 	if editmode {
@@ -485,24 +438,20 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 	// create import panel
 	if importmode {
 		fmt.Fprint(res, `<div class="panel"><form enctype="multipart/form-data" action="/import" method="post">`)
-		fmt.Fprintf(res, `<input type="file" name="uploadfile"><button type="submit">%s</button>`,l["upload"])
+		fmt.Fprintf(res, `<input type="file" name="uploadfile"><button type="submit">%s</button>`, l["upload"])
 		fmt.Fprint(res, `</form></div>`)
 	}
 
 	// create export panel
 	if exportmode {
 		fmt.Fprint(res, `<div class="panel"><form action="/export" target="frame_export">`)
-		fmt.Fprintf(res, `<select name="type"><option selected value="gm">GroupMatcher</option><option value="extotal">%s</option><option value="exlimited">%s</select> <button type="submit">%s</button>`, l["extotal"], l["exlimited"],l["export"])
+		fmt.Fprintf(res, `<select name="type"><option selected value="gm">GroupMatcher</option><option value="extotal">%s</option><option value="exlimited">%s</select> <button type="submit">%s</button>`, l["extotal"], l["exlimited"], l["export"])
 		fmt.Fprint(res, `</form><iframe width="1" height="1" name="frame_export" style="distplay:none;"></iframe></div>`)
 	}
 
 	// end document
 	fmt.Fprint(res, "</div>")
 	fmt.Fprint(res, `</div></body></html>`)
-
-	if exitmode {
-		time.AfterFunc(time.Second, exit)
-	}
 }
 
 // handle file-uploads for import
@@ -579,7 +528,13 @@ func handleExport(res http.ResponseWriter, req *http.Request) {
 // main function
 func main() {
 	initLangs()
-	l = langs["de"]
+	oslang := os.Getenv("LANG")
+	l = langs["en"] // fallback
+	for lang := range langs {
+		if strings.HasPrefix(oslang, lang) {
+			l = langs[lang]
+		}
+	}
 
 	// properly exit on receiving exit signal
 	go func() {
@@ -641,8 +596,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	url := "http://" + listener.Addr().String()
+
 	// Create a new window
-	w, err := a.NewWindow("http://" + listener.Addr().String(), &astilectron.WindowOptions{
+	w, err := a.NewWindow(url, &astilectron.WindowOptions{
 		Center: astilectron.PtrBool(true),
 		Height: astilectron.PtrInt(800),
 		Width:  astilectron.PtrInt(1200),
@@ -662,31 +619,32 @@ func main() {
 			SubMenu: []*astilectron.MenuItemOptions{
 				{Label: astilectron.PtrStr("Öffnen")},
 				{Label: astilectron.PtrStr("Speichern")},
+				{Label: astilectron.PtrStr("Speichern unter...")},
 				{Label: astilectron.PtrStr("Exportieren"), SubMenu: []*astilectron.MenuItemOptions{
 					{Label: astilectron.PtrStr("Excel (teilweise)")},
 					{Label: astilectron.PtrStr("Excel (vollständig)")},
 				}},
-				{Label: astilectron.PtrStr("Bearbeitungsmodus"), Type: astilectron.MenuItemTypeCheckbox},
 				{Label: astilectron.PtrStr("Beenden"), Role: astilectron.MenuItemRoleQuit},
 			},
 		},
 		{
 			Label: astilectron.PtrStr("Verteilen"),
 			SubMenu: []*astilectron.MenuItemOptions{
-				{Label:astilectron.PtrStr("Löschen")},
-				{Label:astilectron.PtrStr("Verteilen")},
-				{Label:astilectron.PtrStr("Zurücksetzen")},
+				{Label: astilectron.PtrStr("Löschen")},
+				{Label: astilectron.PtrStr("Verteilen")},
+				{Label: astilectron.PtrStr("Zurücksetzen")},
 			},
 		},
 		{
 			Label: astilectron.PtrStr("Sprache"),
-			SubMenu: func() ([]*astilectron.MenuItemOptions) {
+			SubMenu: func() []*astilectron.MenuItemOptions {
 				o := make([]*astilectron.MenuItemOptions, 0, len(langs))
 				for n, lang := range langs {
 					name := n
 					o = append(o, &astilectron.MenuItemOptions{
 						Label: astilectron.PtrStr(lang["#name"]),
-						Type: astilectron.MenuItemTypeRadio,
+						Type:  astilectron.MenuItemTypeRadio,
+						Checked: astilectron.PtrBool(lang["#name"] == l["#name"]),
 						OnClick: func(e astilectron.Event) bool {
 							l = langs[name]
 							return false
@@ -695,6 +653,28 @@ func main() {
 				}
 				return o
 			}(),
+		},
+		{
+			Label: astilectron.PtrStr("Hilfe"),
+			SubMenu: []*astilectron.MenuItemOptions{
+				{Label: astilectron.PtrStr("Hilfe"), Role: astilectron.MenuItemRoleHelp}, // TODO: open documentation
+				{Label: astilectron.PtrStr("Über GroupMatcher"), Role: astilectron.MenuItemRoleAbout, OnClick: func(e astilectron.Event) bool {
+					aboutWindow, err := a.NewWindow(url+"/?about", &astilectron.WindowOptions{
+						Center: astilectron.PtrBool(true),
+						Width:  astilectron.PtrInt(900),
+						Height: astilectron.PtrInt(450),
+						Resizable: astilectron.PtrBool(false),
+					})
+					if err != nil {
+						log.Fatal(err)
+					}
+					err = aboutWindow.Create()
+					if err != nil {
+						log.Fatal(err)
+					}
+					return false
+				}},
+			},
 		},
 	})
 	m.Create()
