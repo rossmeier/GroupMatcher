@@ -1,0 +1,27 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Group Matcher</title>
+		<meta charset="UTF-8">
+		<style>td{padding:0 3px}</style>
+		<link rel="stylesheet" href="static/style.css">
+		<link rel="stylesheet" href="static/jquery-linedtextarea/jquery-linedtextarea.css">
+		<script src="static/jquery-3.1.1.js"></script>
+		<script src="static/jquery-linedtextarea/jquery-linedtextarea.js"></script>
+		<script>
+		    // This will wait for the astilectron namespace to be ready
+		    document.addEventListener('astilectron-ready', function() {
+
+		        // This will listen to messages sent by GO
+		        astilectron.listen(function(message) {
+
+					document.body.innerHTML = message;
+
+        		});
+			})
+		</script>
+	</head>
+	<body>
+		{{.Body}}
+	</body>
+</html>

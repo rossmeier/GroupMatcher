@@ -4,27 +4,30 @@ package main
 //TODO: localize font
 
 import (
-	"github.com/veecue/GroupMatcher/matching"
-	"github.com/veecue/GroupMatcher/parseInput"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"math/rand"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
+	"os/signal"
+	"path"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
-	"path"
-	"os/signal"
-	"github.com/tealeg/xlsx"
+
 	"github.com/asticode/go-astilectron"
+	"github.com/tealeg/xlsx"
+	"github.com/veecue/GroupMatcher/matching"
+	"github.com/veecue/GroupMatcher/parseInput"
 )
 
 // map of all supported languages
@@ -137,12 +140,32 @@ func sortPersons() {
 // http handler function for the main GUI
 func handleRoot(res http.ResponseWriter, req *http.Request) {
 
+	t, err := template.ParseFiles("templates/workspace.tmpl")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	body := handleChanges(req.URL.Query(), req.PostFormValue("data"))
+
+	type Data struct {
+		Body template.HTML
+	}
+
+	var bodyHTML template.HTML
+
+	bodyHTML = template.HTML(body)
+
+	t.Execute(res, Data{bodyHTML})
+}
+
+//handle changes
+
+func handleChanges(form url.Values, data string) string {
+	res := bytes.Buffer{}
+
 	var errors bytes.Buffer
 	var notifications bytes.Buffer
 	var err error
-
-	// parse URL parameters
-	form := req.URL.Query()
 
 	// switch language
 	if form["lang"] != nil {
@@ -153,18 +176,6 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 		} else {
 			l = lang
 		}
-	}
-
-	//generate import mode
-	importmode := false
-	if form["importmode"] != nil {
-		importmode = true
-	}
-
-	//generate export mode
-	exportmode := false
-	if form["exportmode"] != nil {
-		exportmode = true
 	}
 
 	// remove all persons from their groups
@@ -187,7 +198,7 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 		if strings.HasPrefix(formName, "person") {
 			i, err := strconv.Atoi(strings.TrimPrefix(formName, "person"))
 			if err != nil {
-				http.Error(res, err.Error(), http.StatusInternalServerError)
+				log.Fatal(err)
 			}
 			listedPersons = append(listedPersons, persons[i])
 		}
@@ -208,7 +219,7 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				errors.WriteString(l["group_deleted"] + errGroups + "<br>")
 			}
-			err = m.MatchManyAndTakeBest(50, time.Minute, 10 * time.Second)
+			err = m.MatchManyAndTakeBest(50, time.Minute, 10*time.Second)
 			if err != nil {
 				errors.WriteString(l[err.Error()] + "<br>")
 			}
@@ -216,7 +227,7 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 		} else {
 			if err.Error() == "combination_overfilled" {
 				errors.WriteString(l["combination_overfilled"] + errGroups + "<br>")
-			}else {
+			} else {
 				errors.WriteString(l[err.Error()] + "<br>")
 			}
 		}
@@ -226,7 +237,7 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 	if form["delfrom"] != nil {
 		j, err := strconv.Atoi(form.Get("delfrom"))
 		if err != nil {
-			http.Error(res, err.Error(), http.StatusInternalServerError)
+			log.Fatal(err)
 		}
 		for _, p := range listedPersons {
 			i := p.IndexIn(groups[j].Members)
@@ -240,7 +251,7 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 	if form["addto"] != nil {
 		j, err := strconv.Atoi(form.Get("addto"))
 		if err != nil {
-			http.Error(res, err.Error(), http.StatusInternalServerError)
+			log.Fatal(err)
 		}
 		for _, p := range listedPersons {
 			var hasThisPreference bool
@@ -261,7 +272,6 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 	editmode := false
 	editmodeContent := ""
 	if form["edit"] != nil {
-		data := req.PostFormValue("data")
 		if data != "" {
 			groups, persons, err = parseInput.ParseGroupsAndPersons(strings.NewReader(data))
 			if err != nil {
@@ -306,203 +316,130 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 		notifications.WriteString(l["cleared"] + "<br>")
 	}
 
-	var exitmode bool
-	if form["exit"] != nil {
-		exitmode = true
-		notifications.WriteString(l["thanks"])
-		errors.WriteString(l["close_now"])
-	}
-
 	// calculate matching quote for display
 	quote_value, _ := matching.NewMatcher(persons, groups).CalcQuote()
 
 	// sort persons before display
 	sortPersons()
 
-	// generate DOM
-	fmt.Fprint(res, `<!DOCTYPE HTML><html><head><title>Group Matcher</title><meta charset="UTF-8"><style>td{padding:0 3px}</style>`)
-	fmt.Fprint(res, `<link rel="stylesheet" href="static/style.css"><link rel="stylesheet" href="static/jquery-linedtextarea/jquery-linedtextarea.css">`)
-	fmt.Fprint(res, `<script src="static/jquery-3.1.1.js"></script><script src="static/jquery-linedtextarea/jquery-linedtextarea.js"></script>`)
-
-	fmt.Fprint(res, `</head><body>`)
-
 	// create menu:
-	if exportmode || importmode || editmode {
-		fmt.Fprintf(res, `<div class="header"><ul><li><a href="/">%s</a></li></ul></li></div>`, l["return"])
-	}else if exitmode {
-		fmt.Fprintf(res, `<div class="header"><ul><li style="text-transform:none;">%s</li><li></ul></li></div>`, "&copy Justus Roßmeier, Christian Obermaier & Max Obermeier")
-	}else{
-		fmt.Fprintf(res, `<div class="header"><ul><li><a href="/?clear">%s</a></li><li><a href="/?reset">%s</a></li><li><a href="/?match">%s</a></li></ul></li></div>`, l["reset"], l["restore"], l["match_selected"])
-	}
-
-	//create exit button
-	if !exitmode {
-		fmt.Fprint(res, `<a href="/?exit"><div id="shutdown"></div></a>`)
+	if editmode {
+		res.WriteString(`<div class="header"><ul><li><a onclick="astilectron.send('/')">` + l["return"] + `</a></li></ul></li></div>`)
+	} else {
+		res.WriteString(`<div class="header"><ul><li><a onclick="astilectron.send('/?clear')">` + l["reset"] + `</a></li><li><a onclick="astilectron.send('/?reset')">` + l["restore"] + `</a></li><li><a onclick="astilectron.send('/?match')">` + l["match_selected"] + `</a></li></ul></li></div>`)
 	}
 
 	// sidebar
 	var quoteInDegree float64
-	if quote_value == 0.0{
+	if quote_value == 0.0 {
 		quoteInDegree = 0.0
 	} else {
-		quoteInDegree = (180 - (quote_value-1) * 90)
+		quoteInDegree = (180 - (quote_value-1)*90)
 	}
-	fmt.Fprintf(res, `<div class="sidebar">`)
-	if !exitmode {
-		fmt.Fprintf(res, `<scale style="background-image:linear-gradient(%sdeg, transparent 50%%, #2F3840 50%%),linear-gradient(0deg, #2F3840 50%%, transparent 50%%);"></scale>
-			<div class="circle"><h1>%s</h1></div><div id="groups">%s<ul>`, strconv.FormatFloat(quoteInDegree, 'f', 0, 64), strconv.FormatFloat(quote_value, 'f', 2, 64), l["group-overview"])
-		if len(groups) == 0 {
-			fmt.Fprintf(res, "<li>%s</li>", l["none"])
-		} else {
+	res.WriteString(`<div class="sidebar">`)
+
+	res.WriteString(`<scale style="background-image:linear-gradient(` + strconv.FormatFloat(quoteInDegree, 'f', 0, 64) + `deg, transparent 50%%, #2F3840 50%%),linear-gradient(0deg, #2F3840 50%%, transparent 50%%);"></scale>
+		<div class="circle"><h1>` + strconv.FormatFloat(quote_value, 'f', 2, 64) + `</h1></div><div id="groups">` + l["group-overview"] + `<ul>`)
+	if len(groups) == 0 {
+		res.WriteString(`<li>` + l["none"] + `</li>`)
+	} else {
+		for i, group := range groups {
+			htmlid := fmt.Sprint("g", i)
+			if (len(group.Members) < group.MinSize || len(group.Members) > group.Capacity) && !matching.AllEmpty(groups) {
+				res.WriteString(`<li><a style="color: #ca5773" href="#` + htmlid + `">` + group.Name + `</a></li>`)
+			} else {
+				res.WriteString(`<li><a href="#` + htmlid + `">` + group.Name + `</a></li>`)
+			}
+		}
+
+	}
+
+	res.WriteString(`</li></ul></div>`)
+
+	res.WriteString(`</div>`)
+
+	res.WriteString(`<div id="content">`)
+	// print notifications and errors:
+	if errors.Len() > 0 {
+		res.WriteString(`<div class="errors">` + errors.String() + `</div>`)
+	}
+	if notifications.Len() > 0 {
+		res.WriteString(`<div class="notifications">` + notifications.String() + `</div>`)
+	}
+
+	res.WriteString(`<div id="panels">`)
+	// list unassigned persons:
+	if !editmode {
+
+		grouplessPersons := matching.GetGrouplessPersons(persons, groups)
+		if !editmode && len(grouplessPersons) > 0 {
+			res.WriteString(`<table class="left panel"><form action="">`)
+			res.WriteString(`<tr class="heading-big unassigned"><td colspan="5"><h3>` + l["unassigned"] + `</h3></td></tr>`)
+			res.WriteString(`<tr class="headings-middle unassigned"><th><span class="spacer"></span></th><th>` + l["name"] + `</th><th>` + l["1stchoice"] + `</th><th>` + l["2ndchoice"] + `</th><th>` + l["3rdchoice"] + `</th></tr>`)
+			//res.WriteString( `<tr><td colspan="5"><button type="submit" name="match">` +  + `</button></td></tr>`, l["match_selected"])
+			for i, person := range grouplessPersons {
+				res.WriteString(`<tr class="person unassigned"><td><!--input type="checkbox" name="person` + strconv.Itoa(i) + `"--></td><td>` + person.Name + `</td>`)
+
+				for i := 0; i < 3; i++ {
+					if i >= len(person.Preferences) {
+						res.WriteString(`<td>--------</td>`)
+					} else {
+						prefID := person.Preferences[i].IndexIn(groups)
+						res.WriteString(`<td><a onclick="astilectron.send('?person` + strconv.Itoa(person.IndexIn(persons)) + `&addto=` + strconv.Itoa(prefID) + `')" title="` + l["add_to_group"] + `">` + person.Preferences[i].StringWithSize() + `</a></td>`)
+					}
+				}
+
+				res.WriteString("</tr>")
+			}
+			res.Write([]byte(`</form></table>`))
+		}
+
+		// list group and their members
+		if !editmode && len(groups) > 0 {
+			res.WriteString("<table class=\"right panel\">")
 			for i, group := range groups {
 				htmlid := fmt.Sprint("g", i)
-				if (len(group.Members) < group.MinSize || len(group.Members) > group.Capacity) && !matching.AllEmpty(groups) {
-					fmt.Fprintf(res, `<li><a style="color: #ca5773" href="#%s">%s</a></li>`, htmlid, group.Name)
-				}else{
-					fmt.Fprintf(res, `<li><a href="#%s">%s</a></li>`, htmlid, group.Name)
-				}
-			}
+				res.Write([]byte(`<form action="">`))
+				res.WriteString(`<tr class="heading-big assigned"><td colspan="5"><h3 id="` + htmlid + `">` + group.StringWithSize() + `</h3></td></tr>`)
+				res.WriteString(`<tr class="headings-middle assigned"><th><span class="spacer"></span></th><th>` + l["name"] + `</th><th>` + l["1stchoice"] + `</th><th>` + l["2ndchoice"] + `</th><th>` + l["3rdchoice"] + `</th></tr>`)
+				for _, person := range group.Members {
+					res.WriteString(`<tr class="person assigned"><td><!--input type="checkbox" name="person` + strconv.Itoa(i) + `"--></td><td>` + person.Name + `</td>`)
 
-		}
-		if importmode {
-			fmt.Fprintf(res, `</ul></div><div id="controls"><ul><li><a href="?edit">%s</a></li><li class ="active"><a href="?importmode">%s</a></li><li><a href="?exportmode">%s</a></li><li>`, l["edit"], l["import"], l["export"])
-		}else if exportmode {
-			fmt.Fprintf(res, `</ul></div><div id="controls"><ul><li><a href="?edit">%s</a></li><li><a href="?importmode">%s</a></li><li class ="active"><a href="?exportmode">%s</a></li><li>`, l["edit"], l["import"], l["export"])
-		}else if editmode {
-			fmt.Fprintf(res, `</ul></div><div id="controls"><ul><li class ="active"><a href="?edit">%s</a></li><li><a href="?importmode">%s</a></li><li><a href="?exportmode">%s</a></li><li>`, l["edit"], l["import"], l["export"])
-		}else {
-			fmt.Fprintf(res, `</ul></div><div id="controls"><ul><li><a href="?edit">%s</a></li><li><a href="?importmode">%s</a></li><li><a href="?exportmode">%s</a></li><li>`, l["edit"], l["import"], l["export"])
-		}
-		printSeperator := false
-		for langname, lang := range langs {
-			if printSeperator {
-				fmt.Fprint(res, ` | `)
-			}else{
-				printSeperator = true
-			}
-			fmt.Fprintf(res, `<a href="?lang=%s">%s</a>`, langname, lang["#name"])
-		}
-		fmt.Fprint(res, `</li></ul></div>`)
-	}else{
-		fmt.Fprintf(res,`<div class="about">%s</div>`,l["about"])
-	}
-	fmt.Fprint(res,`</div>`)
-
-	if !exitmode {
-		fmt.Fprint(res, `<div id="content">`)
-		// print notifications and errors:
-		if errors.Len() > 0 {
-			fmt.Fprintf(res, `<div class="errors">%s</div>`, errors.String())
-		}
-		if notifications.Len() > 0 {
-			fmt.Fprintf(res, `<div class="notifications">%s</div>`, notifications.String())
-		}
-	}else{
-		// print notifications and errors:
-		if errors.Len() > 0 {
-			fmt.Fprintf(res, `<div class="errors" style="animation:appear 5s;opacity:1;">%s</div>`, errors.String())
-		}
-		if notifications.Len() > 0 {
-			fmt.Fprintf(res, `<div class="notifications">%s</div>`, notifications.String())
-		}
-	}
-
-
-	if !exitmode {
-		fmt.Fprint(res, `<div id="panels">`)
-		// list unassigned persons:
-		if !editmode && !importmode && !exportmode {
-
-			grouplessPersons := matching.GetGrouplessPersons(persons, groups)
-			if !editmode && len(grouplessPersons) > 0 {
-				fmt.Fprint(res, `<table class="left panel"><form action="">`)
-				fmt.Fprintf(res, `<tr class="heading-big unassigned"><td colspan="5"><h3>%s</h3></td></tr>`, l["unassigned"])
-				fmt.Fprintf(res, `<tr class="headings-middle unassigned"><th><span class="spacer"></span></th><th>%s</th><th>%s</th><th>%s</th><th>%s</th></tr>`, l["name"], l["1stchoice"], l["2ndchoice"], l["3rdchoice"])
-				//fmt.Fprintf(res, `<tr><td colspan="5"><button type="submit" name="match">%s</button></td></tr>`, l["match_selected"])
-				for i, person := range grouplessPersons {
-					fmt.Fprintf(res, `<tr class="person unassigned"><td><!--input type="checkbox" name="person%d"--></td><td>%s</td>`, i, person.Name)
-
-					for i := 0; i < 3; i++ {
-						if i >= len(person.Preferences) {
-							fmt.Fprint(res, `<td>--------</td>`)
+					for j := 0; j < 3; j++ {
+						if j >= len(person.Preferences) {
+							res.WriteString(`<td>--------</td>`)
 						} else {
-							prefID := person.Preferences[i].IndexIn(groups)
-							fmt.Fprintf(res, `<td><a href="?person%d&addto=%d" title="%s">%s</a></td>`, person.IndexIn(persons), prefID, l["add_to_group"], person.Preferences[i].StringWithSize())
-						}
-					}
-
-					fmt.Fprint(res, "</tr>")
-				}
-				res.Write([]byte(`</form></table>`))
-			}
-
-			// list group and their members
-			if !editmode && len(groups) > 0 {
-				fmt.Fprint(res, "<table class=\"right panel\">")
-				for i, group := range groups {
-					htmlid := fmt.Sprint("g", i)
-					res.Write([]byte(`<form action="">`))
-					fmt.Fprintf(res, `<tr class="heading-big assigned"><td colspan="5"><h3 id="%s">%s</h3></td></tr>`, htmlid, group.StringWithSize())
-					fmt.Fprintf(res, `<tr class="headings-middle assigned"><th><span class="spacer"></span></th><th>%s</th><th>%s</th><th>%s</th><th>%s</th></tr>`, l["name"], l["1stchoice"], l["2ndchoice"], l["3rdchoice"])
-					for _, person := range group.Members {
-						fmt.Fprintf(res, `<tr class="person assigned"><td><!--input type="checkbox" name="person%d"--></td><td>%s</td>`, i, person.Name)
-
-						for j := 0; j < 3; j++ {
-							if j >= len(person.Preferences) {
-								fmt.Fprint(res, `<td>--------</td>`)
+							pref := person.Preferences[j]
+							prefID := pref.IndexIn(groups)
+							personID := person.IndexIn(persons)
+							if pref == group {
+								res.WriteString(`<td><a onclick="astilectron.send('/?person` + strconv.Itoa(personID) + `&delfrom=` + strconv.Itoa(i) + `#` + htmlid + `')" class="blue" title="` + l["rem_from_group"] + `">` + pref.StringWithSize() + `</a></td>`)
 							} else {
-								pref := person.Preferences[j]
-								prefID := pref.IndexIn(groups)
-								personID := person.IndexIn(persons)
-								if pref == group {
-									fmt.Fprintf(res, `<td><a href="/?person%d&delfrom=%d#%s" class="blue" title="%s">%s</a></td>`, personID, i, htmlid, l["rem_from_group"], pref.StringWithSize())
-								} else {
-									fmt.Fprintf(res, `<td><a href="/?person%d&delfrom=%d&addto=%d#%s" title="%s">%s</a></td>`, personID, i, prefID, htmlid, l["add_to_group"], pref.StringWithSize())
-								}
+								res.WriteString(`<td><a onclick="astilectron.send('/?person` + strconv.Itoa(personID) + `&delfrom=` + strconv.Itoa(i) + `&addto=` + strconv.Itoa(prefID) + `#` + htmlid + `')" title="` + l["add_to_group"] + `">` + pref.StringWithSize() + `</a></td>`)
 							}
 						}
-
-						fmt.Fprint(res, "</tr>")
 					}
-					res.Write([]byte(`</form>`))
+
+					res.WriteString("</tr>")
 				}
-				fmt.Fprint(res, "</table>")
+				res.Write([]byte(`</form>`))
 			}
+			res.WriteString("</table>")
 		}
-	}else{
-		fmt.Fprint(res, `<div id="content" style="width: calc(100% - 16em); height: calc(100vh - 3em - 2px); background-image:url(static/logo.png);background-repeat:no-repeat; background-size:80% auto; background-position:center center; opacity:0.8;"`)
 	}
-
-
 	// display editmode panel with texbox
 	if editmode {
-		fmt.Fprintf(res, `<div class="panel"><form action="/?edit" method="POST">`)
-		fmt.Fprintf(res, `<textarea id="edit" name="data" class="lined">%s</textarea><script>$(function() {$(".lined").linedtextarea({selectedLine: %v});});</script>`, editmodeContent, errorLine)
-		fmt.Fprintf(res, `<button type="submit">%s</button>`, l["save"])
-		fmt.Fprint(res, `</form></div>`)
-	}
-
-	// create import panel
-	if importmode {
-		fmt.Fprint(res, `<div class="panel"><form enctype="multipart/form-data" action="/import" method="post">`)
-		fmt.Fprintf(res, `<input type="file" name="uploadfile"><button type="submit">%s</button>`,l["upload"])
-		fmt.Fprint(res, `</form></div>`)
-	}
-
-	// create export panel
-	if exportmode {
-		fmt.Fprint(res, `<div class="panel"><form action="/export" target="frame_export">`)
-		fmt.Fprintf(res, `<select name="type"><option selected value="gm">GroupMatcher</option><option value="extotal">%s</option><option value="exlimited">%s</select> <button type="submit">%s</button>`, l["extotal"], l["exlimited"],l["export"])
-		fmt.Fprint(res, `</form><iframe width="1" height="1" name="frame_export" style="distplay:none;"></iframe></div>`)
+		res.WriteString(`<div class="panel"><form action="/?edit" method="POST">`)
+		res.WriteString(`<textarea id="edit" name="data" class="lined">` + editmodeContent + `</textarea><script>$(function() {$(".lined").linedtextarea({selectedLine: ` + strconv.Itoa(errorLine) + `});});</script>`)
+		res.WriteString(`<button type="submit">` + l["save"] + `</button>`)
+		res.WriteString(`</form></div>`)
 	}
 
 	// end document
-	fmt.Fprint(res, "</div>")
-	fmt.Fprint(res, `</div></body></html>`)
+	res.WriteString("</div>")
+	res.WriteString(`</div>`)
 
-	if exitmode {
-		time.AfterFunc(time.Second, exit)
-	}
+	return res.String()
 }
 
 // handle file-uploads for import
@@ -642,7 +579,7 @@ func main() {
 	}
 
 	// Create a new window
-	w, err := a.NewWindow("http://" + listener.Addr().String(), &astilectron.WindowOptions{
+	w, err := a.NewWindow("http://"+listener.Addr().String(), &astilectron.WindowOptions{
 		Center: astilectron.PtrBool(true),
 		Height: astilectron.PtrInt(800),
 		Width:  astilectron.PtrInt(1200),
@@ -673,20 +610,20 @@ func main() {
 		{
 			Label: astilectron.PtrStr("Verteilen"),
 			SubMenu: []*astilectron.MenuItemOptions{
-				{Label:astilectron.PtrStr("Löschen")},
-				{Label:astilectron.PtrStr("Verteilen")},
-				{Label:astilectron.PtrStr("Zurücksetzen")},
+				{Label: astilectron.PtrStr("Löschen")},
+				{Label: astilectron.PtrStr("Verteilen")},
+				{Label: astilectron.PtrStr("Zurücksetzen")},
 			},
 		},
 		{
 			Label: astilectron.PtrStr("Sprache"),
-			SubMenu: func() ([]*astilectron.MenuItemOptions) {
+			SubMenu: func() []*astilectron.MenuItemOptions {
 				o := make([]*astilectron.MenuItemOptions, 0, len(langs))
 				for n, lang := range langs {
 					name := n
 					o = append(o, &astilectron.MenuItemOptions{
 						Label: astilectron.PtrStr(lang["#name"]),
-						Type: astilectron.MenuItemTypeRadio,
+						Type:  astilectron.MenuItemTypeRadio,
 						OnClick: func(e astilectron.Event) bool {
 							l = langs[name]
 							return false
@@ -698,6 +635,29 @@ func main() {
 		},
 	})
 	m.Create()
+
+	// Listen to messages sent by webserver
+	w.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) (deleteListener bool) {
+		var m string
+		err := e.Message.Unmarshal(&m)
+		if err != nil {
+			log.Println(err)
+		}
+
+		m = strings.Trim(strings.Trim(m, "/"), "?")
+
+		form, err := url.ParseQuery(m)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		body := handleChanges(form, "")
+
+		// Send message to webserver
+		w.Send(body)
+
+		return
+	})
 
 	a.Wait()
 	exit()
