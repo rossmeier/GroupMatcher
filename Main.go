@@ -39,6 +39,9 @@ var autosafepath = path.Join(os.TempDir(), "gm_autosave.json")
 // current project
 var persons []*matching.Person
 var groups []*matching.Group
+var filename string
+
+var w *astilectron.Window
 
 // scan language files from the locales directory and import them into the program
 func initLangs() {
@@ -147,23 +150,35 @@ func handleChanges(form url.Values, data string) string {
 	var notifications bytes.Buffer
 	var err error
 
-	// switch language
-	if form["lang"] != nil {
-		name := form.Get("lang")
-		lang, ok := langs[name]
-		if !ok {
-			errors.WriteString(l["lang_not_found"] + ": " + name + "<br>")
-		} else {
-			l = lang
-		}
-	}
-
 	// remove all persons from their groups
 	if form["reset"] != nil {
 		for i := range groups {
 			groups[i].Members = make([]*matching.Person, 0)
 		}
 		notifications.WriteString(l["restored"] + "<br>")
+	}
+
+	var errorLine int
+	errorLine = 0
+	if form["import"] != nil {
+		p := form.Get("import")
+		if p != "undefined" { // user pressed cancel, do nothing
+			err := handleImport(p)
+			// display any error messages from import
+			if err  == nil {
+				notifications.WriteString(l["import_success"] + "<br>")
+			} else {
+				text, withLine, line := separateError(err.Error())
+				errString := l["import_error"] + l[text]
+				if withLine {
+					errorLine = line
+					errString = errString + l["line"] + strconv.Itoa(line)
+				}
+				groups = make([]*matching.Group, 0)
+				persons = make([]*matching.Person, 0)
+				errors.WriteString(errString)
+			}
+		}
 	}
 
 	// generate new project based on randomness(not a gui feature/only available through url)
@@ -270,25 +285,6 @@ func handleChanges(form url.Values, data string) string {
 		}
 	}
 
-	// display any error messages from import
-	var errorLine int
-	errorLine = 0
-	if form["import"] != nil {
-		if form["import"][0] == "success" {
-			notifications.WriteString(l["import_success"] + "<br>")
-		} else {
-			text, withLine, line := separateError(form["import"][0])
-			errString := l["import_error"] + l[text]
-			if withLine {
-				errorLine = line
-				errString = errString + l["line"] + strconv.Itoa(line)
-			}
-			groups = make([]*matching.Group, 0)
-			persons = make([]*matching.Person, 0)
-			errors.WriteString(errString)
-		}
-	}
-
 	// clear if in invalid state or requested
 	if ((groups == nil || persons == nil) && errors.Len() == 0) || form["clear"] != nil {
 		groups = make([]*matching.Group, 0)
@@ -344,7 +340,9 @@ func handleChanges(form url.Values, data string) string {
 		}
 	}
 
-	res.WriteString(`</li></ul></div>`)
+	fmt.Fprintf(&res, `</ul></div><div id="controls"><ul><li><a onclick="astilectron.send('?edit')">%s</a></li>`, l["edit"])
+
+	res.WriteString(`</ul></div>`)
 
 	res.WriteString(`</div>`)
 
@@ -433,28 +431,8 @@ func handleChanges(form url.Values, data string) string {
 }
 
 // handle file-uploads for import
-func handleImport(res http.ResponseWriter, req *http.Request) {
-	var err error
-	defer func() {
-		if err == nil {
-			res.Header().Add("Location", "/?import=success")
-		} else {
-			errString := "/?import=" + err.Error()
-			res.Header().Add("Location", errString)
-		}
-		http.Error(res, "Redirect", 301)
-	}()
-
-	if req.Method == "GET" {
-		return
-	}
-
-	err = req.ParseMultipartForm(1000000000)
-	if err != nil {
-		return
-	}
-
-	file, _, err := req.FormFile("uploadfile")
+func handleImport(filepath string) (err error) {
+	file, err := os.Open(filepath)
 	if err != nil {
 		return
 	}
@@ -462,6 +440,8 @@ func handleImport(res http.ResponseWriter, req *http.Request) {
 	defer file.Close()
 
 	groups, persons, err = parseInput.ParseGroupsAndPersons(file)
+	filename = filepath
+	return
 }
 
 // generate exported file and serve it for download
@@ -504,7 +484,7 @@ func handleExport(res http.ResponseWriter, req *http.Request) {
 }
 
 //update body with no changes
-func updateBody(w *astilectron.Window) {
+func updateBody() {
 	form, err := url.ParseQuery(" ")
 	if err != nil {
 		log.Fatal(err)
@@ -513,7 +493,17 @@ func updateBody(w *astilectron.Window) {
 	body := handleChanges(form, "")
 
 	// Send message to webserver
-	w.Send(body)
+	sendBody(body)
+}
+
+func sendBody(body string) {
+	w.Send(struct {
+		Cmd string
+		Body string
+	}{
+		"body",
+		body,
+	})
 }
 
 // main function
@@ -536,23 +526,9 @@ func main() {
 	}()
 
 	// parse project opened with the program or restore from autosafe
+	var importpath string
 	if len(os.Args) > 1 {
-		file, err := os.OpenFile(os.Args[1], os.O_RDONLY, 0)
-		if err != nil {
-			log.Println("File not found: ", os.Args[1])
-		}
-		groups, persons, err = parseInput.ParseGroupsAndPersons(file)
-		file.Close()
-		if err != nil {
-			text, withLine, line := separateError(err.Error())
-			errString := l["import_error"] + l[text]
-			if withLine {
-				errString = errString + l["line"] + strconv.Itoa(line)
-			}
-			log.Println(errString)
-			fmt.Scan()
-			os.Exit(0)
-		}
+		importpath = os.Args[1]
 	} else {
 		restoreFromAutosave()
 	}
@@ -560,7 +536,6 @@ func main() {
 	// setup http listeners
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	http.HandleFunc("/", handleRoot)
-	http.HandleFunc("/import", handleImport)
 	http.HandleFunc("/export", handleExport)
 
 	// listen on random free port
@@ -588,9 +563,12 @@ func main() {
 	}
 
 	urlString := "http://" + listener.Addr().String()
+	if importpath != "" {
+		urlString += "/?import=" + url.QueryEscape(importpath)
+	}
 
 	// Create a new window
-	w, err := a.NewWindow(urlString, &astilectron.WindowOptions{
+	w, err = a.NewWindow(urlString, &astilectron.WindowOptions{
 		Center: astilectron.PtrBool(true),
 		Height: astilectron.PtrInt(800),
 		Width:  astilectron.PtrInt(1200),
@@ -608,7 +586,12 @@ func main() {
 		{
 			Label: astilectron.PtrStr("Datei"),
 			SubMenu: []*astilectron.MenuItemOptions{
-				{Label: astilectron.PtrStr("Öffnen")},
+				{Label: astilectron.PtrStr("Öffnen"), OnClick: func(e astilectron.Event) bool {
+					w.Send(struct {
+						Cmd string
+					}{"openFile"})
+					return false
+				}},
 				{Label: astilectron.PtrStr("Speichern")},
 				{Label: astilectron.PtrStr("Speichern unter...")},
 				{Label: astilectron.PtrStr("Exportieren"), SubMenu: []*astilectron.MenuItemOptions{
@@ -616,14 +599,6 @@ func main() {
 					{Label: astilectron.PtrStr("Excel (vollständig)")},
 				}},
 				{Label: astilectron.PtrStr("Beenden"), Role: astilectron.MenuItemRoleQuit},
-			},
-		},
-		{
-			Label: astilectron.PtrStr("Verteilen"),
-			SubMenu: []*astilectron.MenuItemOptions{
-				{Label: astilectron.PtrStr("Löschen")},
-				{Label: astilectron.PtrStr("Verteilen")},
-				{Label: astilectron.PtrStr("Zurücksetzen")},
 			},
 		},
 		{
@@ -638,6 +613,7 @@ func main() {
 						Checked: astilectron.PtrBool(lang["#name"] == l["#name"]),
 						OnClick: func(e astilectron.Event) bool {
 							l = langs[name]
+							updateBody()
 							return false
 						},
 					})
@@ -688,7 +664,7 @@ func main() {
 		body := handleChanges(form, "")
 
 		// Send message to webserver
-		w.Send(body)
+		sendBody(body)
 
 		return
 	})

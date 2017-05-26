@@ -14,9 +14,13 @@
 
 		        // This will listen to messages sent by GO
 		        astilectron.listen(function(message) {
-
-					document.body.innerHTML = message;
-
+					switch (message.Cmd) {
+						case "body":
+                            document.body.innerHTML = message.Body;
+                            break;
+						case "openFile":
+                            astilectron.showOpenDialog({filters:[{name: 'Group Matcher (*.gm)', extensions: ['gm']}]}, function(e){astilectron.send("?import=" + encodeURI(e))})
+					}
         		});
 			})
 		</script>
