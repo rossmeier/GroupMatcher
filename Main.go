@@ -652,19 +652,21 @@ func main() {
 				SubMenu: []*astilectron.MenuItemOptions{
 					{Label: astilectron.PtrStr(l["help"]), Role: astilectron.MenuItemRoleHelp}, // TODO: open documentation
 					{Label: astilectron.PtrStr(l["about"]), Role: astilectron.MenuItemRoleAbout, OnClick: func(e astilectron.Event) bool {
-						aboutWindow, err := a.NewWindow(urlString + "/?about", &astilectron.WindowOptions{
-							Center:    astilectron.PtrBool(true),
-							Width:     astilectron.PtrInt(900),
-							Height:    astilectron.PtrInt(450),
-							Resizable: astilectron.PtrBool(false),
-						})
-						if err != nil {
-							log.Fatal(err)
-						}
-						err = aboutWindow.Create()
-						if err != nil {
-							log.Fatal(err)
-						}
+						go func() {
+							aboutWindow, err := a.NewWindow(urlString + "/?about", &astilectron.WindowOptions{
+								Center:    astilectron.PtrBool(true),
+								Width:     astilectron.PtrInt(900),
+								Height:    astilectron.PtrInt(450),
+								Resizable: astilectron.PtrBool(false),
+							})
+							if err != nil {
+								log.Fatal(err)
+							}
+							err = aboutWindow.Create()
+							if err != nil {
+								log.Fatal(err)
+							}
+						}()
 						return false
 					}},
 				},
