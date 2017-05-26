@@ -6,24 +6,40 @@
 		<style>td{padding:0 3px}</style>
 		<link rel="stylesheet" href="static/style.css">
 		<link rel="stylesheet" href="static/jquery-linedtextarea/jquery-linedtextarea.css">
+		<!-- Insert this line above script imports  -->
+		<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+
+		<!-- normal script imports etc  -->
 		<script src="static/jquery-3.1.1.js"></script>
 		<script src="static/jquery-linedtextarea/jquery-linedtextarea.js"></script>
 		<script>
-		    // This will wait for the astilectron namespace to be ready
-		    document.addEventListener('astilectron-ready', function() {
+			function lined() {
+                // reload any linedtextareas
+				var box = $("#edit")
+                $(function() {box.linedtextarea({selectedLine: box.attr("line")});});
+			}
 
-		        // This will listen to messages sent by GO
-		        astilectron.listen(function(message) {
-					switch (message.Cmd) {
-						case "body":
+			$(document).ready(lined)
+
+            // This will wait for the astilectron namespace to be ready
+            document.addEventListener('astilectron-ready', function() {
+                // This will listen to messages sent by GO
+                astilectron.listen(function(message) {
+                    switch (message.Cmd) {
+                        case "body":
                             document.body.innerHTML = message.Body;
+							lined();
                             break;
-						case "openFile":
+                        case "openFile":
                             astilectron.showOpenDialog({filters:[{name: 'Group Matcher (*.gm)', extensions: ['gm']}]}, function(e){astilectron.send("?import=" + encodeURI(e))})
-					}
-        		});
-			})
+							break;
+                    }
+                });
+            })
 		</script>
+
+		<!-- Insert this line after script imports -->
+		<script>if (window.module) module = window.module;</script>
 	</head>
 	<body>
 		{{.Body}}

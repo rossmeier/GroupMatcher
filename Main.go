@@ -160,6 +160,7 @@ func handleChanges(form url.Values, data string) string {
 		notifications.WriteString(l["restored"] + "<br>")
 	}
 
+	var importError string
 	var errorLine int
 	errorLine = 0
 	if form["import"] != nil {
@@ -167,18 +168,10 @@ func handleChanges(form url.Values, data string) string {
 		if p != "undefined" { // user pressed cancel, do nothing
 			err := handleImport(p)
 			// display any error messages from import
-			if err  == nil {
-				notifications.WriteString(l["import_success"] + "<br>")
+			if err == nil {
+				importError = "success"
 			} else {
-				text, withLine, line := separateError(err.Error())
-				errString := l["import_error"] + l[text]
-				if withLine {
-					errorLine = line
-					errString = errString + l["line"] + strconv.Itoa(line)
-				}
-				groups = make([]*matching.Group, 0)
-				persons = make([]*matching.Person, 0)
-				errors.WriteString(errString)
+				importError = err.Error()
 			}
 		}
 	}
@@ -272,11 +265,11 @@ func handleChanges(form url.Values, data string) string {
 		if data != "" {
 			groups, persons, err = parseInput.ParseGroupsAndPersons(strings.NewReader(data))
 			if err != nil {
-				form["import"] = []string{err.Error()}
+				importError = err.Error()
 				editmodeContent = data
 				editmode = true
 			} else {
-				form["import"] = []string{"success"}
+				importError = "success"
 			}
 		} else {
 			editmode = true
@@ -285,6 +278,20 @@ func handleChanges(form url.Values, data string) string {
 				errors.WriteString(l[err.Error()] + "<br>")
 			}
 		}
+	}
+
+	if importError == "success" {
+		notifications.WriteString(l["import_success"] + "<br>")
+	} else if importError != "" {
+		text, withLine, line := separateError(importError)
+		errString := l["import_error"] + l[text]
+		if withLine {
+			errorLine = line
+			errString = errString + l["line"] + strconv.Itoa(line)
+		}
+		groups = make([]*matching.Group, 0)
+		persons = make([]*matching.Person, 0)
+		errors.WriteString(errString)
 	}
 
 	// clear if in invalid state or requested
@@ -420,7 +427,7 @@ func handleChanges(form url.Values, data string) string {
 	// display editmode panel with texbox
 	if editmode {
 		res.WriteString(`<div class="panel"><form action="/?edit" method="POST">`)
-		res.WriteString(`<textarea id="edit" name="data" class="lined">` + editmodeContent + `</textarea><script>$(function() {$(".lined").linedtextarea({selectedLine: ` + strconv.Itoa(errorLine) + `});});</script>`)
+		res.WriteString(`<textarea id="edit" name="data" line="` + strconv.Itoa(errorLine) + `">` + editmodeContent + `</textarea>`)
 		res.WriteString(`<button type="submit">` + l["save"] + `</button>`)
 		res.WriteString(`</form></div>`)
 	}
