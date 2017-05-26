@@ -25,6 +25,8 @@ import (
 	"github.com/tealeg/xlsx"
 	"github.com/veecue/GroupMatcher/matching"
 	"github.com/veecue/GroupMatcher/parseInput"
+	"github.com/asticode/go-astilog"
+	"sort"
 )
 
 // map of all supported languages
@@ -508,6 +510,13 @@ func sendBody(body string) {
 
 // main function
 func main() {
+	astilog.SetLogger(astilog.New(astilog.Configuration{
+		AppName: "GroupMatcher",
+		Verbose: true,
+	}))
+	astilog.Debug("Started")
+	astilog.Error("Hi")
+
 	initLangs()
 	oslang := os.Getenv("LANG")
 	l = langs["en"] // fallback
@@ -582,81 +591,93 @@ func main() {
 		log.Fatal(err)
 	}
 
-	m := w.NewMenu([]*astilectron.MenuItemOptions{
-		{
-			Label: astilectron.PtrStr("Datei"),
-			SubMenu: []*astilectron.MenuItemOptions{
-				{Label: astilectron.PtrStr("Öffnen"), OnClick: func(e astilectron.Event) bool {
-					w.Send(struct {
-						Cmd string
-					}{"openFile"})
-					return false
-				}},
-				{Label: astilectron.PtrStr("Speichern")},
-				{Label: astilectron.PtrStr("Speichern unter...")},
-				{Label: astilectron.PtrStr("Exportieren"), SubMenu: []*astilectron.MenuItemOptions{
-					{Label: astilectron.PtrStr("Excel (teilweise)")},
-					{Label: astilectron.PtrStr("Excel (vollständig)")},
-				}},
-				{Label: astilectron.PtrStr("Beenden"), Role: astilectron.MenuItemRoleQuit},
+	var m *astilectron.Menu
+	var createMenu func()
+	createMenu = func() {
+		m = w.NewMenu([]*astilectron.MenuItemOptions{
+			{
+				Label: astilectron.PtrStr(l["file"]),
+				SubMenu: []*astilectron.MenuItemOptions{
+					{Label: astilectron.PtrStr(l["open"]), OnClick: func(e astilectron.Event) bool {
+						w.Send(struct {
+							Cmd string
+						}{"openFile"})
+						return false
+					}},
+					{Label: astilectron.PtrStr(l["save"])},
+					{Label: astilectron.PtrStr(l["save_as"])},
+					{Label: astilectron.PtrStr(l["export"]), SubMenu: []*astilectron.MenuItemOptions{
+						{Label: astilectron.PtrStr(l["exlimited"])},
+						{Label: astilectron.PtrStr(l["extotal"])},
+					}},
+					{Label: astilectron.PtrStr(l["exit"]), Role: astilectron.MenuItemRoleQuit},
+				},
 			},
-		},
-		{
-			Label: astilectron.PtrStr("Sprache"),
-			SubMenu: func() []*astilectron.MenuItemOptions {
-				o := make([]*astilectron.MenuItemOptions, 0, len(langs))
-				for n, lang := range langs {
-					name := n
-					o = append(o, &astilectron.MenuItemOptions{
-						Label:   astilectron.PtrStr(lang["#name"]),
-						Type:    astilectron.MenuItemTypeRadio,
-						Checked: astilectron.PtrBool(lang["#name"] == l["#name"]),
-						OnClick: func(e astilectron.Event) bool {
-							l = langs[name]
-							updateBody()
-							return false
-						},
-					})
-				}
-				return o
-			}(),
-		},
-		{
-			Label: astilectron.PtrStr("Hilfe"),
-			SubMenu: []*astilectron.MenuItemOptions{
-				{Label: astilectron.PtrStr("Hilfe"), Role: astilectron.MenuItemRoleHelp}, // TODO: open documentation
-				{Label: astilectron.PtrStr("Über GroupMatcher"), Role: astilectron.MenuItemRoleAbout, OnClick: func(e astilectron.Event) bool {
-					aboutWindow, err := a.NewWindow(urlString+"/?about", &astilectron.WindowOptions{
-						Center:    astilectron.PtrBool(true),
-						Width:     astilectron.PtrInt(900),
-						Height:    astilectron.PtrInt(450),
-						Resizable: astilectron.PtrBool(false),
-					})
-					if err != nil {
-						log.Fatal(err)
+			{
+				Label: astilectron.PtrStr(l["language"]),
+				SubMenu: func() []*astilectron.MenuItemOptions {
+					o := make([]*astilectron.MenuItemOptions, 0, len(langs))
+					for n, lang := range langs {
+						name := n
+						o = append(o, &astilectron.MenuItemOptions{
+							Label:   astilectron.PtrStr(lang["#name"]),
+							Type:    astilectron.MenuItemTypeRadio,
+							Checked: astilectron.PtrBool(lang["#name"] == l["#name"]),
+							OnClick: func(e astilectron.Event) bool {
+								l = langs[name]
+								go func() {
+									m.Destroy()
+									createMenu()
+									updateBody()
+								}()
+								return false
+							},
+						})
 					}
-					err = aboutWindow.Create()
-					if err != nil {
-						log.Fatal(err)
-					}
-					return false
-				}},
+					sort.Slice(o, func(i, j int) bool {
+						return strings.Compare(*o[i].Label, *o[j].Label) < 0
+					})
+					return o
+				}(),
 			},
-		},
-	})
-	m.Create()
+			{
+				Label: astilectron.PtrStr(l["help"]),
+				SubMenu: []*astilectron.MenuItemOptions{
+					{Label: astilectron.PtrStr(l["help"]), Role: astilectron.MenuItemRoleHelp}, // TODO: open documentation
+					{Label: astilectron.PtrStr(l["about"]), Role: astilectron.MenuItemRoleAbout, OnClick: func(e astilectron.Event) bool {
+						aboutWindow, err := a.NewWindow(urlString + "/?about", &astilectron.WindowOptions{
+							Center:    astilectron.PtrBool(true),
+							Width:     astilectron.PtrInt(900),
+							Height:    astilectron.PtrInt(450),
+							Resizable: astilectron.PtrBool(false),
+						})
+						if err != nil {
+							log.Fatal(err)
+						}
+						err = aboutWindow.Create()
+						if err != nil {
+							log.Fatal(err)
+						}
+						return false
+					}},
+				},
+			},
+		})
+		m.Create()
+	}
+	createMenu()
 
 	// Listen to messages sent by webserver
 	w.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) (deleteListener bool) {
-		var m string
-		err := e.Message.Unmarshal(&m)
+		var msg string
+		err := e.Message.Unmarshal(&msg)
 		if err != nil {
 			log.Println(err)
 		}
 
-		m = strings.Trim(strings.Trim(m, "/"), "?")
+		msg = strings.Trim(strings.Trim(msg, "/"), "?")
 
-		form, err := url.ParseQuery(m)
+		form, err := url.ParseQuery(msg)
 		if err != nil {
 			log.Fatal(err)
 		}
