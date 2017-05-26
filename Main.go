@@ -6,7 +6,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -16,10 +15,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -42,22 +39,6 @@ var autosafepath = path.Join(os.TempDir(), "gm_autosave.json")
 // current project
 var persons []*matching.Person
 var groups []*matching.Group
-
-// open a browser so that the user is able to interact with the WebGUI
-func startBrowser(url string) error {
-	var err error
-	switch runtime.GOOS { //open browser on localhost in different environments
-	case "linux":
-		err = exec.Command("xdg-open", url).Start()
-	case "windows":
-		err = exec.Command("cmd", "/c", "start", url).Start()
-	}
-	if err == nil {
-		return nil
-	} else {
-		return errors.New("Could not open URL in browser")
-	}
-}
 
 // scan language files from the locales directory and import them into the program
 func initLangs() {
@@ -159,7 +140,6 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 }
 
 //handle changes
-
 func handleChanges(form url.Values, data string) string {
 	res := bytes.Buffer{}
 
@@ -316,6 +296,16 @@ func handleChanges(form url.Values, data string) string {
 		notifications.WriteString(l["cleared"] + "<br>")
 	}
 
+	var aboutmode bool
+	if form["about"] != nil {
+		aboutmode = true
+	}
+
+	if aboutmode {
+		//TODO: add proper html here
+		return "about"
+	}
+
 	// calculate matching quote for display
 	quote_value, _ := matching.NewMatcher(persons, groups).CalcQuote()
 
@@ -336,6 +326,7 @@ func handleChanges(form url.Values, data string) string {
 	} else {
 		quoteInDegree = (180 - (quote_value-1)*90)
 	}
+
 	res.WriteString(`<div class="sidebar">`)
 
 	res.WriteString(`<scale style="background-image:linear-gradient(` + strconv.FormatFloat(quoteInDegree, 'f', 0, 64) + `deg, transparent 50%%, #2F3840 50%%),linear-gradient(0deg, #2F3840 50%%, transparent 50%%);"></scale>
@@ -351,7 +342,6 @@ func handleChanges(form url.Values, data string) string {
 				res.WriteString(`<li><a href="#` + htmlid + `">` + group.Name + `</a></li>`)
 			}
 		}
-
 	}
 
 	res.WriteString(`</li></ul></div>`)
@@ -513,10 +503,29 @@ func handleExport(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+//update body with no changes
+func updateBody(w *astilectron.Window) {
+	form, err := url.ParseQuery(" ")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	body := handleChanges(form, "")
+
+	// Send message to webserver
+	w.Send(body)
+}
+
 // main function
 func main() {
 	initLangs()
-	l = langs["de"]
+	oslang := os.Getenv("LANG")
+	l = langs["en"] // fallback
+	for lang := range langs {
+		if strings.HasPrefix(oslang, lang) {
+			l = langs[lang]
+		}
+	}
 
 	// properly exit on receiving exit signal
 	go func() {
@@ -578,8 +587,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	urlString := "http://" + listener.Addr().String()
+
 	// Create a new window
-	w, err := a.NewWindow("http://"+listener.Addr().String(), &astilectron.WindowOptions{
+	w, err := a.NewWindow(urlString, &astilectron.WindowOptions{
 		Center: astilectron.PtrBool(true),
 		Height: astilectron.PtrInt(800),
 		Width:  astilectron.PtrInt(1200),
@@ -599,11 +610,11 @@ func main() {
 			SubMenu: []*astilectron.MenuItemOptions{
 				{Label: astilectron.PtrStr("Öffnen")},
 				{Label: astilectron.PtrStr("Speichern")},
+				{Label: astilectron.PtrStr("Speichern unter...")},
 				{Label: astilectron.PtrStr("Exportieren"), SubMenu: []*astilectron.MenuItemOptions{
 					{Label: astilectron.PtrStr("Excel (teilweise)")},
 					{Label: astilectron.PtrStr("Excel (vollständig)")},
 				}},
-				{Label: astilectron.PtrStr("Bearbeitungsmodus"), Type: astilectron.MenuItemTypeCheckbox},
 				{Label: astilectron.PtrStr("Beenden"), Role: astilectron.MenuItemRoleQuit},
 			},
 		},
@@ -622,8 +633,9 @@ func main() {
 				for n, lang := range langs {
 					name := n
 					o = append(o, &astilectron.MenuItemOptions{
-						Label: astilectron.PtrStr(lang["#name"]),
-						Type:  astilectron.MenuItemTypeRadio,
+						Label:   astilectron.PtrStr(lang["#name"]),
+						Type:    astilectron.MenuItemTypeRadio,
+						Checked: astilectron.PtrBool(lang["#name"] == l["#name"]),
 						OnClick: func(e astilectron.Event) bool {
 							l = langs[name]
 							return false
@@ -632,6 +644,28 @@ func main() {
 				}
 				return o
 			}(),
+		},
+		{
+			Label: astilectron.PtrStr("Hilfe"),
+			SubMenu: []*astilectron.MenuItemOptions{
+				{Label: astilectron.PtrStr("Hilfe"), Role: astilectron.MenuItemRoleHelp}, // TODO: open documentation
+				{Label: astilectron.PtrStr("Über GroupMatcher"), Role: astilectron.MenuItemRoleAbout, OnClick: func(e astilectron.Event) bool {
+					aboutWindow, err := a.NewWindow(urlString+"/?about", &astilectron.WindowOptions{
+						Center:    astilectron.PtrBool(true),
+						Width:     astilectron.PtrInt(900),
+						Height:    astilectron.PtrInt(450),
+						Resizable: astilectron.PtrBool(false),
+					})
+					if err != nil {
+						log.Fatal(err)
+					}
+					err = aboutWindow.Create()
+					if err != nil {
+						log.Fatal(err)
+					}
+					return false
+				}},
+			},
 		},
 	})
 	m.Create()
