@@ -1,10 +1,11 @@
 # License
 
-```
+
 This program and all elements belonging to it are licensed under the GNU
 GENERAL PUBLIC LICENSE - Version 3. Further restrictions caused by any
 of the included subpackages are listed in the section 'Subpackages'.
-                 
+
+```
                  GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
