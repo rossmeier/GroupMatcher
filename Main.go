@@ -386,17 +386,16 @@ func handleChanges(form url.Values, data string) string {
 	}
 
 	// sidebar
-
-	res.WriteString(`<div id="scale_container"><div id="scale" style="height: ` + strconv.FormatFloat(quoteInPercent, 'f', 2, 64) + `vh;">` + strconv.FormatFloat(quote_value, 'f', 2, 64) + `</div></div>`)
-
 	res.WriteString(`<div class="sidebar">`)
+
+	res.WriteString(`<div id="scale_container"><div id="scale" style="height: ` + strconv.FormatFloat(quoteInPercent, 'f', 2, 64) + `%;"><p>` + strconv.FormatFloat(quote_value, 'f', 2, 64) + `</p></div></div>`)
 
 	for i, group := range groups {
 		htmlid := fmt.Sprint("g", i)
 		if (len(group.Members) < group.MinSize || len(group.Members) > group.Capacity) && !matching.AllEmpty(groups) {
-			res.WriteString(`<a class="unfitting group" href="#` + htmlid + `" style="background: linear-gradient(90deg, blue ` + strconv.FormatFloat(float64(len(group.Members)*100)/float64(group.Capacity), 'f', 2, 64) + `%, gray ` + strconv.FormatFloat(float64(len(group.Members)*100)/float64(group.Capacity), 'f', 2, 64) + `%);">` + group.Name + `</a>`)
+			res.WriteString(`<a class="unfitting group" href="#` + htmlid + `" style="background: linear-gradient(90deg, #181b20 ` + strconv.FormatFloat(float64(len(group.Members)*100)/float64(group.Capacity), 'f', 2, 64) + `%, #21252b ` + strconv.FormatFloat(float64(len(group.Members)*100)/float64(group.Capacity), 'f', 2, 64) + `%);">` + group.StringWithSize() + `</a>`)
 		} else {
-			res.WriteString(`<a href="#` + htmlid + `" style="background: linear-gradient(90deg, blue ` + strconv.FormatFloat(float64(len(group.Members)*100)/float64(group.Capacity), 'f', 2, 64) + `%, gray ` + strconv.FormatFloat(float64(len(group.Members)*100)/float64(group.Capacity), 'f', 2, 64) + `%);" class="group">` + group.Name + `</a>`)
+			res.WriteString(`<a href="#` + htmlid + `" style="background: linear-gradient(90deg, #181b20 ` + strconv.FormatFloat(float64(len(group.Members)*100)/float64(group.Capacity), 'f', 2, 64) + `%, #21252b ` + strconv.FormatFloat(float64(len(group.Members)*100)/float64(group.Capacity), 'f', 2, 64) + `%);" class="group">` + group.StringWithSize() + `</a>`)
 		}
 	}
 
@@ -588,7 +587,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(listener.Addr())
 
 	go func() {
 		log.Fatal(http.Serve(listener, nil))
