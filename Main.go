@@ -754,8 +754,6 @@ func main() {
 			log.Println(err)
 		}
 
-		fmt.Println(msg)
-
 		msg = strings.Trim(strings.Trim(msg, "/"), "?")
 
 		form, err := url.ParseQuery(msg)
