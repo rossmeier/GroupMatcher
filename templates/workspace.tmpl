@@ -33,6 +33,9 @@
                         case "openFile":
                             astilectron.showOpenDialog({filters:[{name: 'Group Matcher (*.gm)', extensions: ['gm']}]}, function(e){astilectron.send("?import=" + encodeURI(e))})
 							break;
+						case "internalLink":
+							window.location.href = "/" + message.Body;
+							break;
                     }
                 });
             })

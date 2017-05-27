@@ -21,13 +21,19 @@ import (
 	"strings"
 	"time"
 
+	"sort"
+
 	"github.com/asticode/go-astilectron"
+	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/tealeg/xlsx"
 	"github.com/veecue/GroupMatcher/matching"
 	"github.com/veecue/GroupMatcher/parseInput"
-	"sort"
-	"github.com/elazarl/go-bindata-assetfs"
 )
+
+type Message struct {
+	Cmd  string
+	Body string
+}
 
 //go:generate go-bindata static locales templates
 
@@ -44,6 +50,9 @@ var autosafepath = path.Join(os.TempDir(), "gm_autosave.json")
 var persons []*matching.Person
 var groups []*matching.Group
 var filename string
+
+// buffer to save messages to be sent to astilectron
+var messages []Message
 
 var w *astilectron.Window
 
@@ -155,6 +164,11 @@ func handleChanges(form url.Values, data string) string {
 	var errors bytes.Buffer
 	var notifications bytes.Buffer
 	var err error
+
+	// handle internal links
+	if form["internalLink"] != nil {
+		messages = append(messages, Message{"internalLink", form["internalLink"][0]})
+	}
 
 	// remove all persons from their groups
 	if form["reset"] != nil {
@@ -414,9 +428,9 @@ func handleChanges(form url.Values, data string) string {
 							prefID := pref.IndexIn(groups)
 							personID := person.IndexIn(persons)
 							if pref == group {
-								res.WriteString(`<td><a onclick="astilectron.send('/?person` + strconv.Itoa(personID) + `&delfrom=` + strconv.Itoa(i) + `#` + htmlid + `')" class="blue" title="` + l["rem_from_group"] + `">` + pref.StringWithSize() + `</a></td>`)
+								res.WriteString(`<td><a onclick="astilectron.send('/?person` + strconv.Itoa(personID) + `&delfrom=` + strconv.Itoa(i) + `&internalLink=#` + htmlid + `')" class="blue" title="` + l["rem_from_group"] + `">` + pref.StringWithSize() + `</a></td>`)
 							} else {
-								res.WriteString(`<td><a onclick="astilectron.send('/?person` + strconv.Itoa(personID) + `&delfrom=` + strconv.Itoa(i) + `&addto=` + strconv.Itoa(prefID) + `#` + htmlid + `')" title="` + l["add_to_group"] + `">` + pref.StringWithSize() + `</a></td>`)
+								res.WriteString(`<td><a onclick="astilectron.send('/?person` + strconv.Itoa(personID) + `&delfrom=` + strconv.Itoa(i) + `&addto=` + strconv.Itoa(prefID) + `&internalLink=#` + htmlid + `')" title="` + l["add_to_group"] + `">` + pref.StringWithSize() + `</a></td>`)
 							}
 						}
 					}
@@ -510,10 +524,7 @@ func updateBody() {
 }
 
 func sendBody(body string) {
-	w.Send(struct {
-		Cmd string
-		Body string
-	}{
+	w.Send(Message{
 		"body",
 		body,
 	})
@@ -548,10 +559,10 @@ func main() {
 
 	// setup http listeners
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(&assetfs.AssetFS{
-		Asset: Asset,
-		AssetDir: AssetDir,
+		Asset:     Asset,
+		AssetDir:  AssetDir,
 		AssetInfo: AssetInfo,
-		Prefix: "static",
+		Prefix:    "static",
 	})))
 	http.HandleFunc("/", handleRoot)
 	http.HandleFunc("/export", handleExport)
@@ -655,7 +666,7 @@ func main() {
 					{Label: astilectron.PtrStr(l["help"]), Role: astilectron.MenuItemRoleHelp}, // TODO: open documentation
 					{Label: astilectron.PtrStr(l["about"]), Role: astilectron.MenuItemRoleAbout, OnClick: func(e astilectron.Event) bool {
 						go func() {
-							aboutWindow, err := a.NewWindow(urlString + "/?about", &astilectron.WindowOptions{
+							aboutWindow, err := a.NewWindow(urlString+"/?about", &astilectron.WindowOptions{
 								Center:    astilectron.PtrBool(true),
 								Width:     astilectron.PtrInt(900),
 								Height:    astilectron.PtrInt(450),
@@ -686,6 +697,8 @@ func main() {
 			log.Println(err)
 		}
 
+		fmt.Println(msg)
+
 		msg = strings.Trim(strings.Trim(msg, "/"), "?")
 
 		form, err := url.ParseQuery(msg)
@@ -694,6 +707,10 @@ func main() {
 		}
 
 		body := handleChanges(form, "")
+
+		for _, message := range messages {
+			w.Send(message)
+		}
 
 		// Send message to webserver
 		sendBody(body)
