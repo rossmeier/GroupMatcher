@@ -25,9 +25,11 @@ import (
 	"github.com/tealeg/xlsx"
 	"github.com/veecue/GroupMatcher/matching"
 	"github.com/veecue/GroupMatcher/parseInput"
-	"github.com/asticode/go-astilog"
 	"sort"
+	"github.com/elazarl/go-bindata-assetfs"
 )
+
+//go:generate go-bindata static locales templates
 
 // map of all supported languages
 var langs map[string]map[string]string
@@ -47,17 +49,16 @@ var w *astilectron.Window
 
 // scan language files from the locales directory and import them into the program
 func initLangs() {
-	langFiles, err := ioutil.ReadDir("locales")
+	langFiles, err := AssetDir("locales")
 	if err != nil {
 		log.Fatal(err)
 	}
 	langs = make(map[string]map[string]string, len(langFiles))
-	for _, langFile := range langFiles {
-		filename := langFile.Name()
+	for _, filename := range langFiles {
 		if strings.HasSuffix(filename, ".json") {
 			langname := strings.TrimSuffix(filename, ".json")
 			lang := make(map[string]string)
-			langData, err := ioutil.ReadFile("locales/" + langFile.Name())
+			langData, err := Asset("locales/" + filename)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -125,8 +126,11 @@ func sortPersons() {
 
 // http handler function for the main GUI
 func handleRoot(res http.ResponseWriter, req *http.Request) {
-
-	t, err := template.ParseFiles("templates/workspace.tmpl")
+	tData, err := Asset("templates/workspace.tmpl")
+	if err != nil {
+		log.Fatal(err)
+	}
+	t, err := template.New("workspace").Parse(string(tData))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -517,13 +521,6 @@ func sendBody(body string) {
 
 // main function
 func main() {
-	astilog.SetLogger(astilog.New(astilog.Configuration{
-		AppName: "GroupMatcher",
-		Verbose: true,
-	}))
-	astilog.Debug("Started")
-	astilog.Error("Hi")
-
 	initLangs()
 	oslang := os.Getenv("LANG")
 	l = langs["en"] // fallback
@@ -550,7 +547,12 @@ func main() {
 	}
 
 	// setup http listeners
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(&assetfs.AssetFS{
+		Asset: Asset,
+		AssetDir: AssetDir,
+		AssetInfo: AssetInfo,
+		Prefix: "static",
+	})))
 	http.HandleFunc("/", handleRoot)
 	http.HandleFunc("/export", handleExport)
 
