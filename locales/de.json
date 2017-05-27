@@ -67,5 +67,7 @@
   "save_as": "Speicher unter...",
   "language": "Sprache",
   "help": "Hilfe",
-  "about": "Über GroupMatcher"
+  "about": "Über GroupMatcher",
+  "save_success": "Speichern erfolgreich",
+  "save_error": "Speichern fehlgeschlagen"
 }

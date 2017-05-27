@@ -33,6 +33,15 @@
                         case "openFile":
                             astilectron.showOpenDialog({filters:[{name: 'Group Matcher (*.gm)', extensions: ['gm']}]}, function(e){astilectron.send("?import=" + encodeURI(e))})
 							break;
+						case "save_as":
+							astilectron.showSaveDialog({filters:[{name: 'Group Matcher (*.gm)', extensions: ['gm']}]}, function(e){astilectron.send("?save_as=" + encodeURI(e))})
+							break;
+						case "export_limited":
+							astilectron.showSaveDialog({filters:[{name: 'Group Matcher (*.xlsx)', extensions: ['xlsx']}]}, function(e){astilectron.send("?export_limited=" + encodeURI(e))})
+							break;
+						case "export_total":
+							astilectron.showSaveDialog({filters:[{name: 'Group Matcher (*.xlsx)', extensions: ['xlsx']}]}, function(e){astilectron.send("?export_total=" + encodeURI(e))})
+							break;
 						case "internalLink":
 							window.location.href = "/" + message.Body;
 							break;

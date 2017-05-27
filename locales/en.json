@@ -67,5 +67,7 @@
   "save_as": "Save as...",
   "language": "Language",
   "help": "Help",
-  "about": "About GroupMatcher"
+  "about": "About GroupMatcher",
+  "save_success": "save successful",
+  "save_error": "save failed"
 }

@@ -25,7 +25,6 @@ import (
 
 	"github.com/asticode/go-astilectron"
 	"github.com/elazarl/go-bindata-assetfs"
-	"github.com/tealeg/xlsx"
 	"github.com/veecue/GroupMatcher/matching"
 	"github.com/veecue/GroupMatcher/parseInput"
 )
@@ -53,6 +52,9 @@ var filename string
 
 // buffer to save messages to be sent to astilectron
 var messages []Message
+
+// last path the project was saved to
+var projectPath string
 
 var w *astilectron.Window
 
@@ -187,9 +189,50 @@ func handleChanges(form url.Values, data string) string {
 			err := handleImport(p)
 			// display any error messages from import
 			if err == nil {
+				projectPath = p
 				importError = "success"
 			} else {
 				importError = err.Error()
+			}
+		}
+	}
+
+	if form["save_as"] != nil {
+		p := form.Get("save_as")
+		if p != "undefined" { // user pressed cancel, do nothing
+			err := handleSaveAs(p)
+			// display any error messages from export
+			if err == nil {
+				projectPath = p
+				notifications.WriteString(l["save_success"])
+			} else {
+				errors.WriteString(l["save_error"])
+			}
+		}
+	}
+
+	if form["export_limited"] != nil {
+		p := form.Get("export_limited")
+		if p != "undefined" { // user pressed cancel, do nothing
+			err := handleExport(p, false)
+			// display any error messages from export
+			if err == nil {
+				notifications.WriteString(l["save_success"])
+			} else {
+				errors.WriteString(l["save_error"])
+			}
+		}
+	}
+
+	if form["export_total"] != nil {
+		p := form.Get("export_total")
+		if p != "undefined" { // user pressed cancel, do nothing
+			err := handleExport(p, true)
+			// display any error messages from export
+			if err == nil {
+				notifications.WriteString(l["save_success"])
+			} else {
+				errors.WriteString(l["save_error"])
 			}
 		}
 	}
@@ -471,43 +514,29 @@ func handleImport(filepath string) (err error) {
 	return
 }
 
-// generate exported file and serve it for download
-func handleExport(res http.ResponseWriter, req *http.Request) {
-
-	filetype := req.FormValue("type")
-	var data string
-	var file *xlsx.File
-	var err error
-
-	switch filetype {
-	case "gm":
-		filetype = "gm"
-		data, err = parseInput.FormatGroupsAndPersons(groups, persons)
-		if err != nil {
-			return
-		}
-		res.Header().Add("content-disposition", "attachment; filename=GroupMatcher_export."+filetype)
-		fmt.Fprint(res, data)
-	case "extotal":
-		filetype = "xlsx"
-		file, err = parseInput.FormatGroupsAndPersonsToExcel(groups, persons, l, true)
-		if err != nil {
-			return
-		}
-		res.Header().Add("content-disposition", "attachment; filename=GroupMatcher_export."+filetype)
-		err = file.Write(res)
-		return
-	case "exlimited":
-		filetype = "xlsx"
-		file, err = parseInput.FormatGroupsAndPersonsToExcel(groups, persons, l, false)
-		if err != nil {
-			return
-		}
-		res.Header().Add("content-disposition", "attachment; filename=GroupMatcher_export."+filetype)
-		err = file.Write(res)
-	default:
-		return
+//handle save_as action
+func handleSaveAs(filepath string) (err error) {
+	file, err := os.Create(filepath)
+	if err != nil {
+		return err
 	}
+	defer file.Close()
+
+	text, err := parseInput.FormatGroupsAndPersons(groups, persons)
+	if err != nil {
+		return err
+	}
+	_, err = file.WriteString(text)
+	return err
+}
+
+//handle export as excel-file actions
+func handleExport(filepath string, total bool) (err error) {
+	file, err := parseInput.FormatGroupsAndPersonsToExcel(groups, persons, l, total)
+	if err != nil {
+		return err
+	}
+	return file.Save(filepath)
 }
 
 //update body with no changes
@@ -565,7 +594,6 @@ func main() {
 		Prefix:    "static",
 	})))
 	http.HandleFunc("/", handleRoot)
-	http.HandleFunc("/export", handleExport)
 
 	// listen on random free port
 	listener, err := net.Listen("tcp", "localhost:0")
@@ -624,11 +652,40 @@ func main() {
 						}{"openFile"})
 						return false
 					}},
-					{Label: astilectron.PtrStr(l["save"])},
-					{Label: astilectron.PtrStr(l["save_as"])},
+					{Label: astilectron.PtrStr(l["save"]), OnClick: func(e astilectron.Event) bool {
+
+						if projectPath != "" {
+							err := handleSaveAs(projectPath)
+							if err == nil {
+								return false
+							}
+						}
+
+						w.Send(struct {
+							Cmd string
+						}{"save_as"})
+
+						return false
+					}},
+					{Label: astilectron.PtrStr(l["save_as"]), OnClick: func(e astilectron.Event) bool {
+						w.Send(struct {
+							Cmd string
+						}{"save_as"})
+						return false
+					}},
 					{Label: astilectron.PtrStr(l["export"]), SubMenu: []*astilectron.MenuItemOptions{
-						{Label: astilectron.PtrStr(l["exlimited"])},
-						{Label: astilectron.PtrStr(l["extotal"])},
+						{Label: astilectron.PtrStr(l["exlimited"]), OnClick: func(e astilectron.Event) bool {
+							w.Send(struct {
+								Cmd string
+							}{"export_limited"})
+							return false
+						}},
+						{Label: astilectron.PtrStr(l["extotal"]), OnClick: func(e astilectron.Event) bool {
+							w.Send(struct {
+								Cmd string
+							}{"export_total"})
+							return false
+						}},
 					}},
 					{Label: astilectron.PtrStr(l["exit"]), Role: astilectron.MenuItemRoleQuit},
 				},
