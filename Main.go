@@ -373,7 +373,7 @@ func handleChanges(form url.Values, data string) string {
 	}
 
 	// calculate matching quote for display
-	quote_value, _ := matching.NewMatcher(persons, groups).CalcQuote()
+	quote_value, quoteInPercent := matching.NewMatcher(persons, groups).CalcQuote()
 
 	// sort persons before display
 	sortPersons()
@@ -386,35 +386,23 @@ func handleChanges(form url.Values, data string) string {
 	}
 
 	// sidebar
-	var quoteInDegree float64
-	if quote_value == 0.0 {
-		quoteInDegree = 0.0
-	} else {
-		quoteInDegree = (180 - (quote_value-1)*90)
-	}
+
+	res.WriteString(`<div id="scale_container"><div id="scale" style="height: ` + strconv.FormatFloat(quoteInPercent, 'f', 2, 64) + `vh;">` + strconv.FormatFloat(quote_value, 'f', 2, 64) + `</div></div>`)
 
 	res.WriteString(`<div class="sidebar">`)
 
-	res.WriteString(`<scale style="background-image:linear-gradient(` + strconv.FormatFloat(quoteInDegree, 'f', 0, 64) + `deg, transparent 50%%, #2F3840 50%%),linear-gradient(0deg, #2F3840 50%%, transparent 50%%);"></scale>
-		<div class="circle"><h1>` + strconv.FormatFloat(quote_value, 'f', 2, 64) + `</h1></div><div id="groups">` + l["group-overview"] + `<ul>`)
-	if len(groups) == 0 {
-		res.WriteString(`<li>` + l["none"] + `</li>`)
-	} else {
-		for i, group := range groups {
-			htmlid := fmt.Sprint("g", i)
-			if (len(group.Members) < group.MinSize || len(group.Members) > group.Capacity) && !matching.AllEmpty(groups) {
-				res.WriteString(`<li><a style="color: #ca5773" href="#` + htmlid + `">` + group.Name + `</a></li>`)
-			} else {
-				res.WriteString(`<li><a href="#` + htmlid + `">` + group.Name + `</a></li>`)
-			}
+	for i, group := range groups {
+		htmlid := fmt.Sprint("g", i)
+		if (len(group.Members) < group.MinSize || len(group.Members) > group.Capacity) && !matching.AllEmpty(groups) {
+			res.WriteString(`<a class="unfitting group" href="#` + htmlid + `" style="background: linear-gradient(90deg, blue ` + strconv.FormatFloat(float64(len(group.Members)*100)/float64(group.Capacity), 'f', 2, 64) + `%, gray ` + strconv.FormatFloat(float64(len(group.Members)*100)/float64(group.Capacity), 'f', 2, 64) + `%);">` + group.Name + `</a>`)
+		} else {
+			res.WriteString(`<a href="#` + htmlid + `" style="background: linear-gradient(90deg, blue ` + strconv.FormatFloat(float64(len(group.Members)*100)/float64(group.Capacity), 'f', 2, 64) + `%, gray ` + strconv.FormatFloat(float64(len(group.Members)*100)/float64(group.Capacity), 'f', 2, 64) + `%);" class="group">` + group.Name + `</a>`)
 		}
 	}
 
-	fmt.Fprintf(&res, `</ul></div><div id="controls"><ul><li><a onclick="astilectron.send('?edit')">%s</a></li>`, l["edit"])
+	fmt.Fprintf(&res, `</div><div id="controls"><ul><li><a onclick="astilectron.send('?edit')">%s</a></li>`, l["edit"])
 
 	res.WriteString(`</ul></div>`)
-
-	res.WriteString(`</div>`)
 
 	res.WriteString(`<div id="content">`)
 	// print notifications and errors:
@@ -600,6 +588,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println(listener.Addr())
 
 	go func() {
 		log.Fatal(http.Serve(listener, nil))
@@ -746,6 +735,8 @@ func main() {
 	}
 	createMenu()
 
+	w.OpenDevTools()
+
 	// Listen to messages sent by webserver
 	w.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) (deleteListener bool) {
 		var msg string
@@ -753,8 +744,6 @@ func main() {
 		if err != nil {
 			log.Println(err)
 		}
-
-		fmt.Println(msg)
 
 		msg = strings.Trim(strings.Trim(msg, "/"), "?")
 
