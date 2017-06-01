@@ -4,21 +4,26 @@
 
 /* COLORS */
 @text-bright: rgba(250, 250, 250, 1);
-@text-brighter: #696F75;
+@text-brighter: rgb(133, 140, 147);
 @text-dark: rgba(10, 10, 10, 1);
 @sidebar-background: white;
-@table-contrast: #fbfdfe;
+@table-contrast: #44494d;
 @body-background: #21252b;
+@content-background: #32373e;
 @border-gray: #181a1f;
 @inset-gray: #181b20;
+@outset-gray: #353b45;
 
 /* FARBSCHEMA */
 @light-blue: #57acca;
 @light-red: #ca5773;
 
 /* SIZE VARIABLES */
-@sidebar-width: 18em;
-@header-size: 3em;
+@sidebar-width: 20em;
+@header-size: 4em;
+
+/* TIMING */
+@hover-transition: 0.15s;
 
 @font-face {
   font-family: 'Noto Sans';
@@ -31,6 +36,10 @@ body {
   font-family: "Noto Sans", "Verdana", "Open Sans", "Arial";
   margin: 0;
   background-color: @body-background;
+
+  ::-webkit-scrollbar {
+	  display: none;
+  }
 }
 
 .sidebar {
@@ -46,6 +55,7 @@ body {
 
 	#scale_container{
 	  float: left;
+	  position: relative;
 	  width: ~"calc(3em - 2px)";
 	  height: ~"calc(100% - 2em - 2px)";
 	  border: 1px solid @border-gray;
@@ -60,6 +70,10 @@ body {
 		  text-align: center;
 		  margin-bottom: 0px;
 		  padding: 0;
+		  position: absolute;
+		  bottom:0;
+		  line-height: 1em;
+		  min-height: 2em;
 
 		  p{
 			  padding-top: 0.5em;
@@ -70,28 +84,41 @@ body {
 	}
 
 	a{
-		color: @light-blue;
+		color: @text-brighter;
 		text-decoration: none;
+		transition: color @hover-transition;
+
+		&:hover{
+			color: @light-blue;
+		}
 	}
 
 	.group {
 		float:left;
 		display: block;
 		border: 1px solid @border-gray;
-		width: ~"calc( - 2px - 1em)";
+		width: ~"calc(13em - 2px)";
 		margin-top: 1em;
 		margin-left: 0em;
 		margin-right: 1em;
 		margin-bottom: 0em;
-		width: auto;
 		padding: 0.5em;
+		line-height: 1em;
 		border-radius: 4px;
+		background-color: @outset-gray;
+		background-position: ~"calc(100% - 0.5em)" center;
+		background-repeat: no-repeat;
+		background-size: auto 50%;
+	}
+
+	.disliked{
+		background-image: url(disliked.svg);
 	}
 
 	.unfitting {
-		color: @light-red;
-		//border-color: @light-red;
+		background-image: url(unfitting.svg);
 	}
+
 
 }
 
@@ -100,41 +127,121 @@ body {
   top: 0;
   right: 0;
   height: @header-size;
-  background-color: @text-bright;
-  border-bottom-left-radius: 4px;
+  background-color: @body-background;
+  border-bottom: solid 1px @border-gray;
+  width: ~"calc(100vw - 20em)";
 
   ul {
     list-style: none;
     display: inline-flex;
     margin: 0;
     padding: 0;
-    text-transform: uppercase;
+    text-transform: uppercase !important;
 
     li {
       display: inline;
-      padding: 1em 1.5em;
+      border: 1px solid @border-gray;
+	  margin-top: 1em;
+	  margin-left: 1em;
+	  margin-right: 0em;
+	  margin-bottom: 0em;
+	  padding: 0.5em;
+	  border-radius: 4px;
+	  line-height: 1em;
+	  background-color: @outset-gray;
 
       a {
         text-decoration: none;
-        color: @text-dark;
-        transition: color .3s;
+        color: @text-brighter;
+        transition: color @hover-transition;
 
         &:hover {
           color: @light-blue;
         }
       }
 
-      &.hasDropDown {
-        padding: 0;
-      }
+	  button{
+		  display: inline;
+		  border: none;
+		  background: none;
+		  text-decoration: none;
+          color: @text-brighter;
+          transition: color @hover-transition;
+		  font-family: "Noto Sans","Verdana","Open Sans","Arial";
+		  font-size: inherit !important;
+		  line-height: 1em;
+		  text-transform: uppercase !important;
+		  padding: 0;
+		  margin:0;
+
+          &:hover {
+            color: @light-blue;
+          }
+	  }
     }
+  }
+
+  .switch{
+	  position: absolute;
+	  top: 1em;
+	  right: 1em;
+	  border: 1px solid @border-gray;
+	  line-height: 1em;
+	  border-radius: 4px;
+
+	  a {
+		  padding: 0.5em;
+		  margin: 0;
+		  border-top-left-radius: 4px;
+		  border-bottom-left-radius: 4px;
+		  display: inline-block;
+		  background-color: @light-blue;
+		  color:@text-bright;
+		  cursor: default;
+		  pointer-events: none;
+
+		  &:last-of-type{
+			  border-top-left-radius: 0px;
+			  border-bottom-left-radius: 0px;
+			  border-top-right-radius: 4px;
+			  border-bottom-right-radius: 4px;
+			  border-left: solid 1px @border-gray;
+		  }
+	  }
+
+	  button {
+		  display: inline-block;
+		  border: none !important;
+		  font-family: inherit !important;
+		  font-size: inherit !important;
+  		  padding: 0.5em !important;
+		  line-height: 1em !important;
+		  margin: 0 !important;
+		  border-top-left-radius: 4px;
+		  border-bottom-left-radius: 4px;
+		  background-color: @outset-gray !important;
+		  color:@text-brighter;
+		  cursor: pointer;
+	  }
+
+	  .inactive{
+		  cursor: pointer;
+		  background-color: @outset-gray;
+		  color: @text-brighter;
+		  pointer-events: all;
+	  }
   }
 }
 
 #content {
-	display: none;
-	margin-left: ~"calc(2em + @sidebar-width)";
-	margin-top: @header-size;
+	position: fixed;
+	bottom: 0em;
+	left: ~"calc(2px + "@sidebar-width~")";
+	height: ~"calc(100% - 1px -"@header-size~")";
+	width: ~"calc(100% - 2px - "@sidebar-width~")";
+	overflow-y: auto;
+	background-color: @content-background;
+	color: @text-brighter;
 }
 
 table{
@@ -146,11 +253,20 @@ table{
   width: 100%;
 
     .heading-big {
-      color: @light-blue;
+      color: @text-bright;
       text-align: center;
+	  th{
+		  background-color: @content-background;
+	  }
+	  td{
+		  background-color: @content-background;
+	  }
+	  tr{
+		  background-color: @content-background;
+	  }
 
       h3 {
-        border-top: 0.0625em dotted darken(white, 50%);
+        border-top: 0.0625em dotted @border-gray;
         padding-top: 1em;
       }
     }
@@ -184,33 +300,31 @@ table{
 
     .headings-middle {
        th{
-           background-color: white;
+           background-color: @content-background;
        }
        td{
-           background-color: white;
+           background-color: @content-background;
        }
        tr{
-           background-color: white;
+           background-color: @content-background;
        }
     }
 }
 
 .errors, .notifications{
     position: fixed;
-    right:0;
-    bottom: -10em;
-    background-color: @sidebar-background;
+    right:1em;
+    top: calc(@header-size + 1em);
     padding:1em;
-    padding-left: 1.5em;
-    color: @text-brighter;
-    border-left: 0.5em solid white;
+    color: @text-dark;
+	border-radius: 4px;
     z-index: 1;
 }
 
 .notifications{
-    border-color: @light-blue;
-    animation:fadeOut 5s;opacity:0;
-    @keyframes fadeOut{100%{opacity:0; bottom: 7em;}90%{opacity:.2; bottom: 7em;}50%{opacity:.2; bottom: 7em;}40%{opacity:1; bottom: 7em;}0%{opacity:1; bottom: 7em;}}
+    background-color: @light-blue;
+    animation:fadeOut 3s;opacity:0;
+    @keyframes fadeOut{100%{opacity:0;}85%{opacity: .2;}50%{opacity:.2;}35%{opacity:1;}0%{opacity:1;}}
 
     &:hover{
         cursor: default;
@@ -218,15 +332,14 @@ table{
 }
 
 .errors{
-    bottom: 7em;
-    border-color: @light-red;
+    background-color: @light-red;
     transition: all 0s ease 9999999s;
 
     &:active{
         transition-delay:0s;
         visibility: visible;
         opacity: 0;
-        bottom: -10em;
+        top: -10em;
     }
 
     &:hover{
@@ -235,31 +348,20 @@ table{
     @keyframes appear{100%{opacity:0;}1%{opacity:0;}0%{opacity:1;}}
 }
 
-//shutdown button
-#shutdown {
-    display: block;
-    position: fixed;
-    top: 0.5em;
-    right: 1em;
-    width: 2em;
-    height: 2em;
-    background-image: url(exit.png);
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-color: @text-brighter;
-    transition: background-color .3s;
-    &:hover{
-        background-color: @light-red;
-        cursor: pointer;
-    }
+textarea{
+	font-size: 12pt !important;
+    margin: 1em !important;
+	margin-bottom: 0 !important;
+	padding: 0.5em !important;
+    width: ~"calc(100% - 3em - 2px)" !important;
+    height: ~"calc(100vh - 7em - 3px)" !important;
+    resize: vertical;
+	background-color: @table-contrast !important;
+	color: @text-bright !important;
+	border: solid 1px @border-gray !important;
+	border-radius: 4px !important;
 }
 
-textarea{
-    margin: 0 !important;
-    width: ~"calc(100% - 70px)" !important;
-    height: 30em;
-    resize: vertical;
-}
 
 .linedwrap{
     width: ~"calc(100% - 4em)"!important;
@@ -272,11 +374,6 @@ textarea{
 .lineselect{
     color: @light-red !important;
     font-weight: bold;
-}
-
-button, select, input{
-    margin: 2em;
-    margin-right: 0;
 }
 
 a {

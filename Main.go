@@ -56,6 +56,9 @@ var messages []Message
 // last path the project was saved to
 var projectPath string
 
+// project data as .gm text
+var gmStore string
+
 var w *astilectron.Window
 
 // scan language files from the locales directory and import them into the program
@@ -323,22 +326,39 @@ func handleChanges(form url.Values, data string) string {
 	editmode := false
 	editmodeContent := ""
 	if form["edit"] != nil {
+		fmt.Println(1)
 		if data != "" {
-			groups, persons, err = parseInput.ParseGroupsAndPersons(strings.NewReader(data))
+			fmt.Println(2)
+			gmStore = data
+			groups, persons, err = parseInput.ParseGroupsAndPersons(strings.NewReader(gmStore))
 			if err != nil {
 				importError = err.Error()
 				editmodeContent = data
-				editmode = true
+				fmt.Println(3)
 			} else {
 				importError = "success"
+				fmt.Println(4)
 			}
+		}
+		fmt.Println(5)
+		editmode = true
+		if gmStore != "" {
+			editmodeContent = gmStore
+			fmt.Println(6)
 		} else {
-			editmode = true
 			editmodeContent, err = parseInput.FormatGroupsAndPersons(groups, persons)
 			if err != nil {
 				errors.WriteString(l[err.Error()] + "<br>")
+				fmt.Println(7)
 			}
+			fmt.Println(8)
 		}
+	}
+
+	// stores edited content if net saved yet
+	if form["storeEdited"] != nil {
+		gmStore = data
+		fmt.Println(9)
 	}
 
 	if importError == "success" {
@@ -380,9 +400,10 @@ func handleChanges(form url.Values, data string) string {
 
 	// create menu:
 	if editmode {
-		res.WriteString(`<div class="header"><ul><li><a onclick="astilectron.send('/')">` + l["return"] + `</a></li></ul></li></div>`)
+		res.WriteString(`<form action="/?edit" method="POST">`)
+		res.WriteString(`<div class="header"><ul><li><button type="submit">` + l["apply"] + `</button></li></ul><div class="switch"><button type="submit" formaction="/?storeEdited">` + l["assign"] + `</button><a onclick="astilectron.send('?edit')">` + l["edit"] + `</a></div></div>`)
 	} else {
-		res.WriteString(`<div class="header"><ul><li><a onclick="astilectron.send('/?clear')">` + l["reset"] + `</a></li><li><a onclick="astilectron.send('/?reset')">` + l["restore"] + `</a></li><li><a onclick="astilectron.send('/?match')">` + l["match_selected"] + `</a></li></ul></li></div>`)
+		res.WriteString(`<div class="header"><ul><li><a onclick="astilectron.send('/?clear')">` + l["reset"] + `</a></li><li><a onclick="astilectron.send('/?reset')">` + l["restore"] + `</a></li><li><a onclick="astilectron.send('/?match')">` + l["match_selected"] + `</a></li></ul><div class="switch"><a onclick="astilectron.send('/')">` + l["assign"] + `</a><a class="inactive" onclick="astilectron.send('?edit')">` + l["edit"] + `</a></div></div>`)
 	}
 
 	// sidebar
@@ -392,14 +413,38 @@ func handleChanges(form url.Values, data string) string {
 
 	for i, group := range groups {
 		htmlid := fmt.Sprint("g", i)
+		/*
+			var disliked bool
+			var goOn bool
+
+			for _, m := range group.Members {
+				for j, p := range m.Preferences {
+					// TODO: calculate meaningful number instead of 2
+					if group.Name == p.Name && j > 2 {
+						disliked = true
+						goOn = true
+						continue
+					}
+				}
+				if goOn {
+					goOn = false
+					continue
+				}
+			}
+		*/
+
+		/*else if disliked {
+			res.WriteString(`<a class="disliked group" href="#` + htmlid + `">` + group.StringWithSize() + `</a>`)
+		} */
+
 		if (len(group.Members) < group.MinSize || len(group.Members) > group.Capacity) && !matching.AllEmpty(groups) {
-			res.WriteString(`<a class="unfitting group" href="#` + htmlid + `" style="background: linear-gradient(90deg, #181b20 ` + strconv.FormatFloat(float64(len(group.Members)*100)/float64(group.Capacity), 'f', 2, 64) + `%, #21252b ` + strconv.FormatFloat(float64(len(group.Members)*100)/float64(group.Capacity), 'f', 2, 64) + `%);">` + group.StringWithSize() + `</a>`)
+			res.WriteString(`<a class="unfitting group" href="#` + htmlid + `">` + group.StringWithSize() + `</a>`)
 		} else {
-			res.WriteString(`<a href="#` + htmlid + `" style="background: linear-gradient(90deg, #181b20 ` + strconv.FormatFloat(float64(len(group.Members)*100)/float64(group.Capacity), 'f', 2, 64) + `%, #21252b ` + strconv.FormatFloat(float64(len(group.Members)*100)/float64(group.Capacity), 'f', 2, 64) + `%);" class="group">` + group.StringWithSize() + `</a>`)
+			res.WriteString(`<a href="#` + htmlid + `" class="group">` + group.StringWithSize() + `</a>`)
 		}
 	}
 
-	fmt.Fprintf(&res, `</div><div id="controls"><ul><li><a onclick="astilectron.send('?edit')">%s</a></li>`, l["edit"])
+	fmt.Fprintf(&res, `</div>`)
 
 	res.WriteString(`</ul></div>`)
 
@@ -474,10 +519,9 @@ func handleChanges(form url.Values, data string) string {
 	}
 	// display editmode panel with texbox
 	if editmode {
-		res.WriteString(`<div class="panel"><form action="/?edit" method="POST">`)
+		res.WriteString(`<div class="panel">`)
 		res.WriteString(`<textarea id="edit" name="data" line="` + strconv.Itoa(errorLine) + `">` + editmodeContent + `</textarea>`)
-		res.WriteString(`<button type="submit">` + l["save"] + `</button>`)
-		res.WriteString(`</form></div>`)
+		res.WriteString(`</div></form>`)
 	}
 
 	// end document
