@@ -4,7 +4,7 @@
 		<title>Group Matcher</title>
 		<meta charset="UTF-8">
 		<style>td{padding:0 3px}</style>
-		<link rel="stylesheet" href="static/style.css">
+		<link rel="stylesheet" href="static/{{.Theme}}.css">
 		<link rel="stylesheet" href="static/jquery-linedtextarea/jquery-linedtextarea.css">
 		<!-- Insert this line above script imports  -->
 		<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
@@ -45,6 +45,9 @@
 						case "internalLink":
 							window.location.href = "/" + message.Body;
 							break;
+						case "reload":
+						    window.location.reload();
+						    break;
                     }
                 });
             })

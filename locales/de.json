@@ -69,5 +69,8 @@
   "help": "Hilfe",
   "about": "Über GroupMatcher",
   "save_success": "Speichern erfolgreich",
-  "save_error": "Speichern fehlgeschlagen"
+  "save_error": "Speichern fehlgeschlagen",
+  "theme": "Design",
+  "bright": "Hell",
+  "dark": "Dunkel"
 }

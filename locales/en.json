@@ -69,5 +69,8 @@
   "help": "Help",
   "about": "About GroupMatcher",
   "save_success": "save successful",
-  "save_error": "save failed"
+  "save_error": "save failed",
+  "theme": "Theme",
+  "bright": "Bright",
+  "dark": "Dark"
 }
