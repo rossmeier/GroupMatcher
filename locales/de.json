@@ -71,5 +71,8 @@
   "save_success": "Speichern erfolgreich",
   "save_error": "Speichern fehlgeschlagen",
   "assign": "Zuordnen",
-  "apply": "Annehmen"
+  "apply": "Annehmen",
+  "theme": "Design",
+  "bright": "Hell",
+  "dark": "Dunkel"
 }

@@ -71,5 +71,8 @@
   "save_success": "save successful",
   "save_error": "save failed",
   "assign": "assign",
-  "apply":"apply"
+  "apply":"apply",
+  "theme": "Theme",
+  "bright": "Bright",
+  "dark": "Dark"
 }

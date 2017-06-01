@@ -53,6 +53,8 @@ var filename string
 // buffer to save messages to be sent to astilectron
 var messages []Message
 
+var darktheme bool
+
 // last path the project was saved to
 var projectPath string
 
@@ -138,6 +140,18 @@ func sortPersons() {
 	}
 }
 
+func setDarkTheme(dark bool) {
+	if darktheme == dark {
+		return
+	}
+	darktheme = dark
+	w.Send(struct {
+		Cmd string
+	}{
+		"reload",
+	})
+}
+
 // http handler function for the main GUI
 func handleRoot(res http.ResponseWriter, req *http.Request) {
 	tData, err := Asset("templates/workspace.tmpl")
@@ -151,15 +165,23 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 
 	body := handleChanges(req.URL.Query(), req.PostFormValue("data"))
 
-	type Data struct {
-		Body template.HTML
-	}
-
 	var bodyHTML template.HTML
 
 	bodyHTML = template.HTML(body)
 
-	t.Execute(res, Data{bodyHTML})
+	t.Execute(res, struct {
+		Body  template.HTML
+		Theme string
+	}{
+		bodyHTML,
+		func() string {
+			if darktheme {
+				return "dark"
+			} else {
+				return "bright"
+			}
+		}(),
+	})
 }
 
 //handle changes
@@ -747,6 +769,20 @@ func main() {
 					})
 					return o
 				}(),
+			},
+			{
+
+				Label: astilectron.PtrStr(l["theme"]),
+				SubMenu: []*astilectron.MenuItemOptions{
+					{Label: astilectron.PtrStr(l["bright"]), Type: astilectron.MenuItemTypeRadio, Checked: astilectron.PtrBool(!darktheme), OnClick: func(e astilectron.Event) bool {
+						setDarkTheme(false)
+						return false
+					}},
+					{Label: astilectron.PtrStr(l["dark"]), Type: astilectron.MenuItemTypeRadio, Checked: astilectron.PtrBool(darktheme), OnClick: func(e astilectron.Event) bool {
+						setDarkTheme(true)
+						return false
+					}},
+				},
 			},
 			{
 				Label: astilectron.PtrStr(l["help"]),
