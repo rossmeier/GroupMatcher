@@ -32,7 +32,7 @@ type Message struct {
 	Body string
 }
 
-//go:generate go-bindata static locales templates
+//go:generate go-bindata static/... locales templates
 
 // map of all supported languages
 var langs map[string]map[string]string
