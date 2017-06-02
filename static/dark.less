@@ -6,7 +6,6 @@
 @text-bright: rgba(250, 250, 250, 1);
 @text-brighter: rgb(133, 140, 147);
 @text-dark: rgba(10, 10, 10, 1);
-@sidebar-background: white;
 @table-contrast: #44494d;
 @body-background: #21252b;
 @content-background: #32373e;
@@ -58,7 +57,6 @@ body {
 	color: @text-brighter;
 	overflow-y:auto;
 	border: 1px solid @border-gray;
-	border-radius: 4px;
 
 	// scale
 
@@ -138,7 +136,7 @@ body {
   height: @header-size;
   background-color: @body-background;
   border-bottom: solid 1px @border-gray;
-  width: ~"calc(100vw - 20em)";
+  width: ~"calc(100vw - 20em - 2px)";
 
   ul {
     list-style: none;
@@ -370,7 +368,7 @@ textarea{
     height: ~"calc(100vh - 7em - 3px)" !important;
     resize: none;
 	background-color: @inset-gray !important;
-	color: @text-brighter !important;
+	color: @text-bright !important;
 }
 
 
@@ -382,7 +380,7 @@ textarea{
     width: ~"calc(100% - 3em - 2px)" !important;
     height: ~"calc(100vh - 7em - 3px)" !important;
 	background-color: @inset-gray !important;
-	color: @text-brighter !important;
+	color: @text-bright !important;
 	border: solid 1px @border-gray !important;
 	border-radius: 4px !important;
 
@@ -391,6 +389,7 @@ textarea{
 		border-right: solid 1px @border-gray !important;
 
 		.lineno{
+			color: @text-bright !important;
 			font-size: 12pt !important;
 		}
 	}

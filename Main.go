@@ -429,22 +429,7 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 		htmlid := fmt.Sprint("g", i)
 
 		var disliked bool
-		var goOn bool
-
-		for _, m := range group.Members {
-			for j, p := range m.Preferences {
-				// TODO: calculate meaningful number instead of 2
-				if group.Name == p.Name && j > 2 {
-					disliked = true
-					goOn = true
-					continue
-				}
-			}
-			if goOn {
-				goOn = false
-				continue
-			}
-		}
+		//TODO: calculate if group is disliked
 
 		if (len(group.Members) < group.MinSize || len(group.Members) > group.Capacity) && !matching.AllEmpty(groups) {
 			res.WriteString(`<a class="unfitting group" href="#` + htmlid + `">` + group.StringWithSize() + `</a>`)
@@ -542,7 +527,6 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 		sendBody(res.String())
 		for _, message := range messages {
 			w.Send(message)
-			fmt.Println(message.Cmd, message.Body)
 		}
 	}
 
@@ -615,7 +599,6 @@ func sendBody(body string) {
 func main() {
 	initLangs()
 	oslang := os.Getenv("LANG")
-	fmt.Println(oslang)
 	l = langs["en"] // fallback
 	for lang := range langs {
 		if strings.HasPrefix(oslang, lang) {
