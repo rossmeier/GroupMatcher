@@ -565,6 +565,8 @@ func handleImport(filepath string) (err error) {
 
 //handle save_as action
 func handleSaveAs(filepath string) (err error) {
+	defer updateBody()
+
 	file, err := os.Create(filepath)
 	if err != nil {
 		return err
@@ -575,6 +577,7 @@ func handleSaveAs(filepath string) (err error) {
 	if err != nil {
 		return err
 	}
+	gmStore = text
 	_, err = file.WriteString(text)
 	return err
 }
@@ -714,7 +717,6 @@ func main() {
 						w.Send(struct {
 							Cmd string
 						}{"save_as"})
-
 						return false
 					}},
 					{Label: astilectron.PtrStr(l["save_as"]), OnClick: func(e astilectron.Event) bool {
