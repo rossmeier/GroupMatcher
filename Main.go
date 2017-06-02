@@ -1,8 +1,6 @@
 // program to match persons with group preferences to their groups
 package main
 
-//TODO: localize font
-
 import (
 	"bytes"
 	"encoding/json"
@@ -375,6 +373,7 @@ func handleChanges(form url.Values, data string) string {
 			}
 			fmt.Println(8)
 		}
+
 	}
 
 	// stores edited content if net saved yet
@@ -422,7 +421,9 @@ func handleChanges(form url.Values, data string) string {
 
 	// create menu:
 	if editmode {
-		res.WriteString(`<form action="/?edit" method="POST">`)
+		// TODO: replace form with astilectron.send(?edit=content) or using iframe
+		res.WriteString(`<iframe name="form" style="display:none"></iframe>`)
+		res.WriteString(`<form action="/?edit" method="POST" target="form">`)
 		res.WriteString(`<div class="header"><ul><li><button type="submit">` + l["apply"] + `</button></li></ul><div class="switch"><button type="submit" formaction="/?storeEdited">` + l["assign"] + `</button><a onclick="astilectron.send('?edit')">` + l["edit"] + `</a></div></div>`)
 	} else {
 		res.WriteString(`<div class="header"><ul><li><a onclick="astilectron.send('/?clear')">` + l["reset"] + `</a></li><li><a onclick="astilectron.send('/?reset')">` + l["restore"] + `</a></li><li><a onclick="astilectron.send('/?match')">` + l["match_selected"] + `</a></li></ul><div class="switch"><a onclick="astilectron.send('/')">` + l["assign"] + `</a><a class="inactive" onclick="astilectron.send('?edit')">` + l["edit"] + `</a></div></div>`)
@@ -488,7 +489,6 @@ func handleChanges(form url.Values, data string) string {
 			res.WriteString(`<table class="left panel"><form action="">`)
 			res.WriteString(`<tr class="heading-big unassigned"><td colspan="5"><h3>` + l["unassigned"] + `</h3></td></tr>`)
 			res.WriteString(`<tr class="headings-middle unassigned"><th><span class="spacer"></span></th><th>` + l["name"] + `</th><th>` + l["1stchoice"] + `</th><th>` + l["2ndchoice"] + `</th><th>` + l["3rdchoice"] + `</th></tr>`)
-			//res.WriteString( `<tr><td colspan="5"><button type="submit" name="match">` +  + `</button></td></tr>`, l["match_selected"])
 			for i, person := range grouplessPersons {
 				res.WriteString(`<tr class="person unassigned"><td><!--input type="checkbox" name="person` + strconv.Itoa(i) + `"--></td><td>` + person.Name + `</td>`)
 
@@ -550,6 +550,7 @@ func handleChanges(form url.Values, data string) string {
 	res.WriteString("</div>")
 	res.WriteString(`</div>`)
 
+	sendBody(res.String())
 	return res.String()
 }
 
@@ -834,10 +835,13 @@ func main() {
 
 		for _, message := range messages {
 			w.Send(message)
+			fmt.Println("message sent")
 		}
 
 		// Send message to webserver
 		sendBody(body)
+		fmt.Println("body was sent")
+		fmt.Println("----------------------------------")
 
 		return
 	})
