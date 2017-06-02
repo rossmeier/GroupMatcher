@@ -161,7 +161,7 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 		log.Fatal(err)
 	}
 
-	body := handleChanges(req.URL.Query(), req.PostFormValue("data"))
+	body := handleChanges(req.URL.Query(), req.PostFormValue("data"), true)
 
 	var bodyHTML template.HTML
 
@@ -183,7 +183,7 @@ func handleRoot(res http.ResponseWriter, req *http.Request) {
 }
 
 //handle changes
-func handleChanges(form url.Values, data string) string {
+func handleChanges(form url.Values, data string, calledByForm bool) string {
 	res := bytes.Buffer{}
 
 	var errors bytes.Buffer
@@ -549,8 +549,9 @@ func handleChanges(form url.Values, data string) string {
 	// end document
 	res.WriteString("</div>")
 	res.WriteString(`</div>`)
-
-	sendBody(res.String())
+	if calledByForm {
+		sendBody(res.String())
+	}
 	return res.String()
 }
 
@@ -600,7 +601,7 @@ func updateBody() {
 		log.Fatal(err)
 	}
 
-	body := handleChanges(form, "")
+	body := handleChanges(form, "", false)
 
 	// Send message to webserver
 	sendBody(body)
@@ -831,7 +832,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		body := handleChanges(form, "")
+		body := handleChanges(form, "", false)
 
 		for _, message := range messages {
 			w.Send(message)
