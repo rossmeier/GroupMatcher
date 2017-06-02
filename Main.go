@@ -429,7 +429,17 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 		htmlid := fmt.Sprint("g", i)
 
 		var disliked bool
-		//TODO: calculate if group is disliked
+		for _, m := range group.Members {
+			for j := int(len(m.Preferences)/2) + 1; j < len(m.Preferences); j++ {
+				if m.Preferences[j].Name == group.Name {
+					disliked = true
+				}
+				break
+			}
+			if disliked {
+				break
+			}
+		}
 
 		if (len(group.Members) < group.MinSize || len(group.Members) > group.Capacity) && !matching.AllEmpty(groups) {
 			res.WriteString(`<a class="unfitting group" href="#` + htmlid + `">` + group.StringWithSize() + `</a>`)
