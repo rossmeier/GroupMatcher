@@ -13,8 +13,10 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -150,6 +152,50 @@ func setDarkTheme(dark bool) {
 	})
 }
 
+// http handler function for the about GUI
+func handleAbout(res http.ResponseWriter, req *http.Request) {
+
+	if req.URL.Query()["open"] != nil {
+		url := req.URL.Query()["open"][0]
+		switch runtime.GOOS { //open browser on localhost in different environments
+		case "linux":
+			exec.Command("xdg-open", url).Start()
+		case "windows":
+			exec.Command("cmd", "/c", "start", url).Start()
+		}
+	}
+
+	tData, err := Asset("templates/about.tmpl")
+	if err != nil {
+		log.Fatal(err)
+	}
+	t, err := template.New("about").Parse(string(tData))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	body := bytes.Buffer{}
+	body.WriteString(`<div class="about"><h1>GroupMatcher</h1><p>` + l["thanks"] + `</p><h2>` + l["about"] + `</h2><p>` + l["abouttext"] + `</p><h2>` + l["project"] + `</h2><p>` + l["github"] + ` - <a href="/about?open=https://github.com/veecue/GroupMatcher">` + l["visit"] + `</a></p><h2>` + l["license"] + `</h2><p>` + l["licensetext"] + `</p></div>`)
+
+	var bodyHTML template.HTML
+
+	bodyHTML = template.HTML(body.String())
+
+	t.Execute(res, struct {
+		Body  template.HTML
+		Theme string
+	}{
+		bodyHTML,
+		func() string {
+			if darktheme {
+				return "dark"
+			} else {
+				return "bright"
+			}
+		}(),
+	})
+}
+
 // http handler function for the main GUI
 func handleRoot(res http.ResponseWriter, req *http.Request) {
 	tData, err := Asset("templates/workspace.tmpl")
@@ -258,12 +304,6 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 				errors.WriteString(l["save_error"])
 			}
 		}
-	}
-
-	// generate new project based on randomness(not a gui feature/only available through url)
-	if form["generate"] != nil {
-		groups, persons = genGroupsAndPersons()
-		notifications.WriteString(l["generated"] + "<br>")
 	}
 
 	// find all selected persons that should be affected by any action
@@ -392,16 +432,6 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 		groups = make([]*matching.Group, 0)
 		persons = make([]*matching.Person, 0)
 		notifications.WriteString(l["cleared"] + "<br>")
-	}
-
-	var aboutmode bool
-	if form["about"] != nil {
-		aboutmode = true
-	}
-
-	if aboutmode {
-		//TODO: add proper html here
-		return "about"
 	}
 
 	// calculate matching quote for display
@@ -640,6 +670,7 @@ func main() {
 		Prefix:    "static",
 	})))
 	http.HandleFunc("/", handleRoot)
+	http.HandleFunc("/about", handleAbout)
 
 	// listen on random free port
 	listener, err := net.Listen("tcp", "localhost:0")
@@ -782,7 +813,7 @@ func main() {
 					{Label: astilectron.PtrStr(l["help"]), Role: astilectron.MenuItemRoleHelp}, // TODO: open documentation
 					{Label: astilectron.PtrStr(l["about"]), Role: astilectron.MenuItemRoleAbout, OnClick: func(e astilectron.Event) bool {
 						go func() {
-							aboutWindow, err := a.NewWindow(urlString+"/?about", &astilectron.WindowOptions{
+							aboutWindow, err := a.NewWindow(urlString+"/about", &astilectron.WindowOptions{
 								Center:    astilectron.PtrBool(true),
 								Width:     astilectron.PtrInt(900),
 								Height:    astilectron.PtrInt(450),
@@ -835,22 +866,4 @@ func main() {
 
 	a.Wait()
 	exit()
-}
-
-// randomly generate groups and persons for testing
-func genGroupsAndPersons() ([]*matching.Group, []*matching.Person) {
-	groups := make([]*matching.Group, 10)
-	for i := 0; i < len(groups); i++ {
-		groups[i] = matching.NewGroup(l["group"]+strconv.Itoa(i), 16, 12)
-	}
-	persons := make([]*matching.Person, 130)
-	for i := 0; i < len(persons); i++ {
-		prefs := make([]*matching.Group, 3)
-		perms := rand.Perm(len(groups))
-		for j := 0; j < 3; j++ {
-			prefs[j] = groups[perms[j]]
-		}
-		persons[i] = matching.NewPerson(l["person"]+strconv.Itoa(i), prefs)
-	}
-	return groups, persons
 }

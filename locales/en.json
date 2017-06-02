@@ -45,7 +45,7 @@
   "lang_not_found": "Language not found",
   "lang": "langauge",
   "groups_empty": "no groups available",
-  "thanks": "Thanks for using Group Matcher",
+  "thanks": "Thanks for using Group Matcher !",
   "min_size": "min size",
   "max_size": "max size",
   "group_size": "group size",
@@ -74,5 +74,10 @@
   "apply":"apply",
   "theme": "Theme",
   "bright": "Bright",
-  "dark": "Dark"
+  "dark": "Dark",
+  "project": "The Project",
+  "github":"You can find the whole project on GitHub. Not only the latest releases for almost every operating system, but also the source code and current developments can be found there.",
+  "visit": "check it out",
+  "license": "License",
+  "licensetext": "The license can be found in the documentation or in the 'LICENSE.md' file delivered with this program."
 }

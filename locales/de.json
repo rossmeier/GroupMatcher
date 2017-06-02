@@ -45,7 +45,7 @@
   "lang_not_found": "Sprache nicht gefunden",
   "lang": "Sprache",
   "groups_empty": "Keine Gruppen vorhanden",
-  "thanks": "Danke, dass sie sich für Group Matcher entschieden haben",
+  "thanks": "Danke, dass sie sich für Group Matcher entschieden haben !",
   "min_size": "Mindestgröße",
   "max_size": "Maximalgröße",
   "group_size": "Gruppengröße",
@@ -74,5 +74,10 @@
   "apply": "Anwenden",
   "theme": "Design",
   "bright": "Hell",
-  "dark": "Dunkel"
+  "dark": "Dunkel",
+  "project": "Das Projekt",
+  "github":"Das gesamte Projekt ist auf GitHub zu finden. Neben den neusten Versionen für fast alle Betriebssysteme werden dort auch der Programmcode und Mitteilungen über aktuelle Entwicklungen bereitgestellt.",
+  "visit": "Seite besuchen",
+  "license": "Lizenz",
+  "licensetext": "Die Lizenz des Programmes und seiner Komponenten ist in der Dokumentation und der 'LICENSE.md' Datei enthalten."
 }
