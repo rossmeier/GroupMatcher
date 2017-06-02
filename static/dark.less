@@ -62,12 +62,13 @@ body {
 
 	#scale_container{
 	  float: left;
-	  position: relative;
+	  position: fixed;
+	  top: 1em;
+	  left: 1em;
 	  width: ~"calc(3em - 2px)";
 	  height: ~"calc(100% - 2em - 2px)";
 	  border: 1px solid @border-gray;
 	  border-radius: 4px;
-	  margin: 1em;
 	  background-color: @inset-gray;
 
 	  #scale {
@@ -101,7 +102,7 @@ body {
 	}
 
 	.group {
-		float:left;
+		float:right;
 		display: block;
 		border: 1px solid @border-gray;
 		width: ~"calc(13em - 2px)";
@@ -116,6 +117,10 @@ body {
 		background-position: ~"calc(100% - 0.5em)" center;
 		background-repeat: no-repeat;
 		background-size: auto 50%;
+
+		&:last-of-type{
+			margin-bottom: 1em;
+		}
 	}
 
 	.disliked{
