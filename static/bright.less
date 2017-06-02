@@ -1,4 +1,4 @@
-// out: style.css, sourcemap: false, compress: true
+// out: bright.css, sourcemap: false, compress: true
 
 //@import url(https://fonts.googleapis.com/css?family=Noto+Sans:400,700);
 
@@ -36,6 +36,15 @@ body {
   font-family: "Noto Sans", "Verdana", "Open Sans", "Arial";
   margin: 0;
   background-color: @body-background;
+
+  user-select: none;
+
+  input:focus,
+  select:focus,
+  textarea:focus,
+  button:focus {
+	  outline: none;
+  }
 
   ::-webkit-scrollbar {
 	  display: none;
@@ -139,18 +148,18 @@ body {
     text-transform: uppercase !important;
 
     li {
-      display: inline;
-      border: 1px solid @border-gray;
-	  margin-top: 1em;
-	  margin-left: 1em;
-	  margin-right: 0em;
-	  margin-bottom: 0em;
-	  padding: 0.5em;
-	  border-radius: 4px;
-	  line-height: 1em;
-	  background-color: @outset-gray;
 
       a {
+		border: 1px solid @border-gray;
+		margin-top: 1em;
+		margin-left: 1em;
+		margin-right: 0em;
+		margin-bottom: 0em;
+		padding: 0.5em;
+		border-radius: 4px;
+		line-height: 1em;
+		background-color: @outset-gray;
+		display: inline-block;
         text-decoration: none;
         color: @text-brighter;
         transition: color @hover-transition;
@@ -161,22 +170,26 @@ body {
       }
 
 	  button{
-		  display: inline;
-		  border: none;
-		  background: none;
-		  text-decoration: none;
-          color: @text-brighter;
-          transition: color @hover-transition;
-		  font-family: "Noto Sans","Verdana","Open Sans","Arial";
-		  font-size: inherit !important;
-		  line-height: 1em;
-		  text-transform: uppercase !important;
-		  padding: 0;
-		  margin:0;
+		border: 1px solid @border-gray;
+		margin-top: 1em;
+		margin-left: 1em;
+		margin-right: 0em;
+		margin-bottom: 0em;
+		padding: 0.5em;
+		border-radius: 4px;
+		line-height: 1em;
+		background-color: @outset-gray;
+		display: inline-block;
+		color: @text-brighter;
+		transition: color @hover-transition;
+		font-family: "Noto Sans","Verdana","Open Sans","Arial";
+		font-size: inherit !important;
+		text-transform: uppercase !important;
+		cursor: pointer;
 
-          &:hover {
-            color: @light-blue;
-          }
+		&:hover {
+		color: @light-blue;
+		}
 	  }
     }
   }
@@ -235,7 +248,7 @@ body {
 
 #content {
 	position: fixed;
-	bottom: 0em;
+	bottom: 0;
 	left: ~"calc(2px + "@sidebar-width~")";
 	height: ~"calc(100% - 1px -"@header-size~")";
 	width: ~"calc(100% - 2px - "@sidebar-width~")";
@@ -251,6 +264,7 @@ table{
 
 .panel {
   width: 100%;
+  padding-bottom: 0.5em;
 
     .heading-big {
       color: @text-bright;
@@ -274,6 +288,8 @@ table{
     .assigned, .unassigned {
 
       &:nth-of-type(2n){background-color: @table-contrast;}
+
+	  &:last-of-type{margin-bottom: 1em;}
 
       th {
         padding-bottom: 1em;
@@ -350,25 +366,34 @@ table{
 
 textarea{
 	font-size: 12pt !important;
+    width: ~"calc(100% - 60px - 0.5em)" !important;
+    height: ~"calc(100vh - 7em - 3px)" !important;
+    resize: none;
+	background-color: @inset-gray !important;
+	color: @text-brighter !important;
+}
+
+
+.linedwrap{
+	font-size: 12pt !important;
     margin: 1em !important;
 	margin-bottom: 0 !important;
 	padding: 0.5em !important;
     width: ~"calc(100% - 3em - 2px)" !important;
     height: ~"calc(100vh - 7em - 3px)" !important;
-    resize: vertical;
-	background-color: @table-contrast !important;
-	color: @text-bright !important;
+	background-color: @inset-gray !important;
+	color: @text-brighter !important;
 	border: solid 1px @border-gray !important;
 	border-radius: 4px !important;
-}
 
+	.lines {
+		font-size: 12pt !important;
+		border-right: solid 1px @border-gray !important;
 
-.linedwrap{
-    width: ~"calc(100% - 4em)"!important;
-    margin-left: ~"calc(2em - 4px)" !important;
-    margin-top: 5em !important;
-    margin-right: 2em !important;
-
+		.lineno{
+			font-size: 12pt !important;
+		}
+	}
 }
 
 .lineselect{
