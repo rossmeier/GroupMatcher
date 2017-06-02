@@ -235,7 +235,7 @@ body {
 
 #content {
 	position: fixed;
-	bottom: 0em;
+	bottom: 0;
 	left: ~"calc(2px + "@sidebar-width~")";
 	height: ~"calc(100% - 1px -"@header-size~")";
 	width: ~"calc(100% - 2px - "@sidebar-width~")";
@@ -251,6 +251,7 @@ table{
 
 .panel {
   width: 100%;
+  padding-bottom: 0.5em;
 
     .heading-big {
       color: @text-bright;
@@ -274,6 +275,8 @@ table{
     .assigned, .unassigned {
 
       &:nth-of-type(2n){background-color: @table-contrast;}
+
+	  &:last-of-type{margin-bottom: 1em;}
 
       th {
         padding-bottom: 1em;
@@ -364,11 +367,18 @@ textarea{
 
 
 .linedwrap{
-    width: ~"calc(100% - 4em)"!important;
-    margin-left: ~"calc(2em - 4px)" !important;
+	display: block !important;
+    width: 100px !important;
+	height: 100px !important;
+	position: fixed;
+	top: 0;
+	left: 0;
+	/*
+    margin-left: 24em !important;
     margin-top: 5em !important;
     margin-right: 2em !important;
-
+	*/
+	z-index: 5;
 }
 
 .lineselect{

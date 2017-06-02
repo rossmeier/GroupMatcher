@@ -24,7 +24,7 @@
   "cleared": "Entfernt",
   "generated": "Erzeugt",
   "session_invalid": "Sitzung abgelaufen und wurde neu erstellt",
-  "import_success": "Datei erfolgreich importiert",
+  "import_success": "Änderungen erfolgreich angewendet",
   "import_error": "Importfehler: ",
   "syntax_error": "Syntaxfehler",
   "group_initializer_not_found": "Identifikator für Gruppen nicht gefunden",

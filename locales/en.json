@@ -24,7 +24,7 @@
   "cleared": "cleared",
   "generated": "generated",
   "session_invalid": "Session invalid and recreated",
-  "import_success": "imported file successfully",
+  "import_success": "applied changes successfully",
   "import_error": "import error: ",
   "syntax_error": "syntax error",
   "group_initializer_not_found": "group-identifier not found",

@@ -346,32 +346,26 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 	editmode := false
 	editmodeContent := ""
 	if form["edit"] != nil {
-		fmt.Println(1)
 		if data != "" {
-			fmt.Println(2)
 			gmStore = data
-			groups, persons, err = parseInput.ParseGroupsAndPersons(strings.NewReader(gmStore))
+			groupStore, personStore, err := parseInput.ParseGroupsAndPersons(strings.NewReader(gmStore))
 			if err != nil {
 				importError = err.Error()
 				editmodeContent = data
-				fmt.Println(3)
 			} else {
 				importError = "success"
-				fmt.Println(4)
+				groups = groupStore
+				persons = personStore
 			}
 		}
-		fmt.Println(5)
 		editmode = true
 		if gmStore != "" {
 			editmodeContent = gmStore
-			fmt.Println(6)
 		} else {
 			editmodeContent, err = parseInput.FormatGroupsAndPersons(groups, persons)
 			if err != nil {
 				errors.WriteString(l[err.Error()] + "<br>")
-				fmt.Println(7)
 			}
-			fmt.Println(8)
 		}
 
 	}
@@ -379,7 +373,6 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 	// stores edited content if net saved yet
 	if form["storeEdited"] != nil {
 		gmStore = data
-		fmt.Println(9)
 	}
 
 	if importError == "success" {
@@ -391,8 +384,6 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 			errorLine = line
 			errString = errString + l["line"] + strconv.Itoa(line)
 		}
-		groups = make([]*matching.Group, 0)
-		persons = make([]*matching.Person, 0)
 		errors.WriteString(errString)
 	}
 
@@ -421,7 +412,7 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 
 	// create menu:
 	if editmode {
-		// TODO: replace form with astilectron.send(?edit=content) or using iframe
+		// provide hidden iframe for post forms to avoid reload via server handler
 		res.WriteString(`<iframe name="form" style="display:none"></iframe>`)
 		res.WriteString(`<form action="/?edit" method="POST" target="form">`)
 		res.WriteString(`<div class="header"><ul><li><button type="submit">` + l["apply"] + `</button></li></ul><div class="switch"><button type="submit" formaction="/?storeEdited">` + l["assign"] + `</button><a onclick="astilectron.send('?edit')">` + l["edit"] + `</a></div></div>`)
@@ -436,32 +427,29 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 
 	for i, group := range groups {
 		htmlid := fmt.Sprint("g", i)
-		/*
-			var disliked bool
-			var goOn bool
 
-			for _, m := range group.Members {
-				for j, p := range m.Preferences {
-					// TODO: calculate meaningful number instead of 2
-					if group.Name == p.Name && j > 2 {
-						disliked = true
-						goOn = true
-						continue
-					}
-				}
-				if goOn {
-					goOn = false
+		var disliked bool
+		var goOn bool
+
+		for _, m := range group.Members {
+			for j, p := range m.Preferences {
+				// TODO: calculate meaningful number instead of 2
+				if group.Name == p.Name && j > 2 {
+					disliked = true
+					goOn = true
 					continue
 				}
 			}
-		*/
-
-		/*else if disliked {
-			res.WriteString(`<a class="disliked group" href="#` + htmlid + `">` + group.StringWithSize() + `</a>`)
-		} */
+			if goOn {
+				goOn = false
+				continue
+			}
+		}
 
 		if (len(group.Members) < group.MinSize || len(group.Members) > group.Capacity) && !matching.AllEmpty(groups) {
 			res.WriteString(`<a class="unfitting group" href="#` + htmlid + `">` + group.StringWithSize() + `</a>`)
+		} else if disliked {
+			res.WriteString(`<a class="disliked group" href="#` + htmlid + `">` + group.StringWithSize() + `</a>`)
 		} else {
 			res.WriteString(`<a href="#` + htmlid + `" class="group">` + group.StringWithSize() + `</a>`)
 		}
@@ -486,7 +474,7 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 
 		grouplessPersons := matching.GetGrouplessPersons(persons, groups)
 		if !editmode && len(grouplessPersons) > 0 {
-			res.WriteString(`<table class="left panel"><form action="">`)
+			res.WriteString(`<table class="left panel">`)
 			res.WriteString(`<tr class="heading-big unassigned"><td colspan="5"><h3>` + l["unassigned"] + `</h3></td></tr>`)
 			res.WriteString(`<tr class="headings-middle unassigned"><th><span class="spacer"></span></th><th>` + l["name"] + `</th><th>` + l["1stchoice"] + `</th><th>` + l["2ndchoice"] + `</th><th>` + l["3rdchoice"] + `</th></tr>`)
 			for i, person := range grouplessPersons {
@@ -503,7 +491,7 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 
 				res.WriteString("</tr>")
 			}
-			res.Write([]byte(`</form></table>`))
+			res.Write([]byte(`</table>`))
 		}
 
 		// list group and their members
@@ -511,7 +499,7 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 			res.WriteString("<table class=\"right panel\">")
 			for i, group := range groups {
 				htmlid := fmt.Sprint("g", i)
-				res.Write([]byte(`<form action="">`))
+				res.Write([]byte(``))
 				res.WriteString(`<tr class="heading-big assigned"><td colspan="5"><h3 id="` + htmlid + `">` + group.StringWithSize() + `</h3></td></tr>`)
 				res.WriteString(`<tr class="headings-middle assigned"><th><span class="spacer"></span></th><th>` + l["name"] + `</th><th>` + l["1stchoice"] + `</th><th>` + l["2ndchoice"] + `</th><th>` + l["3rdchoice"] + `</th></tr>`)
 				for _, person := range group.Members {
@@ -534,7 +522,6 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 
 					res.WriteString("</tr>")
 				}
-				res.Write([]byte(`</form>`))
 			}
 			res.WriteString("</table>")
 		}
@@ -549,9 +536,16 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 	// end document
 	res.WriteString("</div>")
 	res.WriteString(`</div>`)
+
+	// do refresh on real body (not hidden iframe)
 	if calledByForm {
 		sendBody(res.String())
+		for _, message := range messages {
+			w.Send(message)
+			fmt.Println(message.Cmd, message.Body)
+		}
 	}
+
 	return res.String()
 }
 
@@ -618,6 +612,7 @@ func sendBody(body string) {
 func main() {
 	initLangs()
 	oslang := os.Getenv("LANG")
+	fmt.Println(oslang)
 	l = langs["en"] // fallback
 	for lang := range langs {
 		if strings.HasPrefix(oslang, lang) {
@@ -815,8 +810,6 @@ func main() {
 	}
 	createMenu()
 
-	w.OpenDevTools()
-
 	// Listen to messages sent by webserver
 	w.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) (deleteListener bool) {
 		var msg string
@@ -834,15 +827,13 @@ func main() {
 
 		body := handleChanges(form, "", false)
 
+		// Send body to webserver
+		sendBody(body)
+
+		// send other messages
 		for _, message := range messages {
 			w.Send(message)
-			fmt.Println("message sent")
 		}
-
-		// Send message to webserver
-		sendBody(body)
-		fmt.Println("body was sent")
-		fmt.Println("----------------------------------")
 
 		return
 	})
