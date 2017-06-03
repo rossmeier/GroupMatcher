@@ -429,6 +429,7 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 
 	// clear if in invalid state or requested
 	if ((groups == nil || persons == nil) && errors.Len() == 0) || form["clear"] != nil {
+		projectPath = "";
 		groups = make([]*matching.Group, 0)
 		persons = make([]*matching.Person, 0)
 		notifications.WriteString(l["cleared"] + "<br>")
