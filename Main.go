@@ -15,7 +15,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"path"
 	"runtime"
 	"strconv"
 	"strings"
@@ -41,9 +40,6 @@ var langs map[string]map[string]string
 
 // current language
 var l map[string]string
-
-// path to safe the current project to on exit
-var autosafepath = path.Join(os.TempDir(), "gm_autosave.json")
 
 // current project
 var persons []*matching.Person
@@ -108,28 +104,22 @@ func separateError(err string) (text string, with bool, line int) {
 
 // store current project to autosafe location on program exit
 func autosafe() {
-	j, err := matching.ToJSON(groups, persons)
-	if err != nil {
-		log.Fatal(err)
-	}
+	if projectPath == "" {
+		log.Fatal("no path")
+	} else {
+		gm, err := parseInput.FormatGroupsAndPersons(groups, persons)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	ioutil.WriteFile(autosafepath, j, 0600)
+		ioutil.WriteFile(projectPath, []byte(gm), 0600)
+	}
 }
 
 // autosafe and exit program
 func exit() {
 	autosafe()
 	os.Exit(0)
-}
-
-// read and import a possibly produced autosafe
-func restoreFromAutosave() {
-	j, err := ioutil.ReadFile(autosafepath)
-	if err != nil {
-		return
-	}
-	groups, persons, err = matching.FromJSON(j)
-	// ignore errors
 }
 
 // sorte the persons by alphabet for better UI
@@ -266,6 +256,10 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 		}
 	}
 
+	if form["save"] != nil {
+		notifications.WriteString(l["save_success"])
+	}
+
 	if form["save_as"] != nil {
 		p := form.Get("save_as")
 		if p != "undefined" { // user pressed cancel, do nothing
@@ -396,6 +390,13 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 				importError = "success"
 				groups = groupStore
 				persons = personStore
+
+				// avoid loosing data on sudden exit with no path being provided
+				if projectPath == "" {
+					w.Send(struct {
+						Cmd string
+					}{"save_as"})
+				}
 			}
 		}
 		editmode = true
@@ -429,7 +430,7 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 
 	// clear if in invalid state or requested
 	if ((groups == nil || persons == nil) && errors.Len() == 0) || form["clear"] != nil {
-		projectPath = "";
+		projectPath = ""
 		groups = make([]*matching.Group, 0)
 		persons = make([]*matching.Person, 0)
 		notifications.WriteString(l["cleared"] + "<br>")
@@ -656,11 +657,8 @@ func main() {
 	}()
 
 	// parse project opened with the program or restore from autosafe
-	var importpath string
 	if len(os.Args) > 1 {
-		importpath = os.Args[1]
-	} else {
-		restoreFromAutosave()
+		projectPath = os.Args[1]
 	}
 
 	// setup http listeners
@@ -685,7 +683,7 @@ func main() {
 	time.Sleep(time.Millisecond * 10)
 	// Initialize astilectron
 	var a, _ = astilectron.New(astilectron.Options{
-		AppName: "Groupt Matcher",
+		AppName: "GroupMatcher",
 		//AppIconDefaultPath: "<your .png icon>",
 		//AppIconDarwinPath:  "<your .icns icon>",
 		BaseDirectoryPath: "cache",
@@ -698,8 +696,8 @@ func main() {
 	}
 
 	urlString := "http://" + listener.Addr().String()
-	if importpath != "" {
-		urlString += "/?import=" + url.QueryEscape(importpath)
+	if projectPath != "" {
+		urlString += "?import=" + projectPath
 	}
 
 	// Create a new window
@@ -735,6 +733,12 @@ func main() {
 						if projectPath != "" {
 							err := handleSaveAs(projectPath)
 							if err == nil {
+								form, err := url.ParseQuery("save")
+								if err != nil {
+									log.Fatal(err)
+								}
+								body := handleChanges(form, "", false)
+								sendBody(body)
 								return false
 							}
 						}
