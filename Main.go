@@ -236,7 +236,7 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 		for i := range groups {
 			groups[i].Members = make([]*matching.Person, 0)
 		}
-		notifications.WriteString(l["restored"] + "<br>")
+		notifications.WriteString(l["reseted"] + "<br>")
 	}
 
 	var importError string
@@ -429,7 +429,13 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 	}
 
 	// clear if in invalid state or requested
-	if ((groups == nil || persons == nil) && errors.Len() == 0) || form["clear"] != nil {
+	if (groups == nil || persons == nil) && errors.Len() == 0 {
+		projectPath = ""
+		groups = make([]*matching.Group, 0)
+		persons = make([]*matching.Person, 0)
+	}
+
+	if form["clear"] != nil {
 		projectPath = ""
 		groups = make([]*matching.Group, 0)
 		persons = make([]*matching.Person, 0)
@@ -449,7 +455,7 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 		res.WriteString(`<form action="/?edit" method="POST" target="form">`)
 		res.WriteString(`<div class="header"><ul><li><button type="submit">` + l["apply"] + `</button></li></ul><div class="switch"><button type="submit" formaction="/?storeEdited">` + l["assign"] + `</button><a onclick="astilectron.send('?edit')">` + l["edit"] + `</a></div></div>`)
 	} else {
-		res.WriteString(`<div class="header"><ul><li><a onclick="astilectron.send('/?clear')">` + l["reset"] + `</a></li><li><a onclick="astilectron.send('/?reset')">` + l["restore"] + `</a></li><li><a onclick="astilectron.send('/?match')">` + l["match_selected"] + `</a></li></ul><div class="switch"><a onclick="astilectron.send('/')">` + l["assign"] + `</a><a class="inactive" onclick="astilectron.send('?edit')">` + l["edit"] + `</a></div></div>`)
+		res.WriteString(`<div class="header"><ul><li><a onclick="astilectron.send('/?clear')">` + l["clear"] + `</a></li><li><a onclick="astilectron.send('/?reset')">` + l["reset"] + `</a></li><li><a onclick="astilectron.send('/?match')">` + l["match_selected"] + `</a></li></ul><div class="switch"><a onclick="astilectron.send('/')">` + l["assign"] + `</a><a class="inactive" onclick="astilectron.send('?edit')">` + l["edit"] + `</a></div></div>`)
 	}
 
 	// sidebar
@@ -601,7 +607,9 @@ func handleSaveAs(filepath string) (err error) {
 
 	text, err := parseInput.FormatGroupsAndPersons(groups, persons)
 	if err != nil {
-		return err
+		if err.Error() != "groups_empty" {
+			return err
+		}
 	}
 	gmStore = text
 	_, err = file.WriteString(text)
