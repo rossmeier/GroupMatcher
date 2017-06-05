@@ -42,15 +42,9 @@ var langs map[language.Tag]map[string]string
 // current language
 var l map[string]string
 
-<<<<<<< HEAD
-=======
 // set language per param
 var langFlag = flag.String("lang", "", "The language of the UI")
 
-// path to safe the current project to on exit
-var autosafepath = path.Join(os.TempDir(), "gm_autosave.json")
-
->>>>>>> master
 // current project
 var persons []*matching.Person
 var groups []*matching.Group
@@ -101,9 +95,10 @@ func initLangs() {
 	userTags := make([]language.Tag, 0)
 	if *langFlag != "" {
 		userTags = append(userTags, language.Make(*langFlag))
-	}
-	if os.Getenv("LANG") != "" {
+	} else if os.Getenv("LANG") != "" {
 		userTags = append(userTags, language.Make(os.Getenv("LANG")))
+	} else {
+		userTags = append(userTags, language.Make("en"))
 	}
 
 	tag, _, _ := langMatcher.Match(userTags...)
@@ -131,9 +126,7 @@ func separateError(err string) (text string, with bool, line int) {
 
 // store current project to autosafe location on program exit
 func autosafe() {
-	if projectPath == "" {
-		log.Fatal("no path")
-	} else {
+	if projectPath != "" {
 		gm, err := parseInput.FormatGroupsAndPersons(groups, persons)
 		if err != nil {
 			log.Fatal(err)
@@ -686,12 +679,9 @@ func main() {
 		exit()
 	}()
 
-	// parse project opened with the program or restore from autosafe
-	var importpath string
+	// parse project opened with the program
 	if flag.NArg() >= 1 {
-		importpath = flag.Arg(0)
-	} else {
-		restoreFromAutosave()
+		projectPath = flag.Arg(0)
 	}
 
 	// setup http listeners
