@@ -4,6 +4,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -16,16 +17,16 @@ import (
 	"os/exec"
 	"os/signal"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
-
-	"sort"
 
 	"github.com/asticode/go-astilectron"
 	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/veecue/GroupMatcher/matching"
 	"github.com/veecue/GroupMatcher/parseInput"
+	"golang.org/x/text/language"
 )
 
 type Message struct {
@@ -36,11 +37,20 @@ type Message struct {
 //go:generate go-bindata static/... locales templates
 
 // map of all supported languages
-var langs map[string]map[string]string
+var langs map[language.Tag]map[string]string
 
 // current language
 var l map[string]string
 
+<<<<<<< HEAD
+=======
+// set language per param
+var langFlag = flag.String("lang", "", "The language of the UI")
+
+// path to safe the current project to on exit
+var autosafepath = path.Join(os.TempDir(), "gm_autosave.json")
+
+>>>>>>> master
 // current project
 var persons []*matching.Person
 var groups []*matching.Group
@@ -65,7 +75,7 @@ func initLangs() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	langs = make(map[string]map[string]string, len(langFiles))
+	langs = make(map[language.Tag]map[string]string, len(langFiles))
 	for _, filename := range langFiles {
 		if strings.HasSuffix(filename, ".json") {
 			langname := strings.TrimSuffix(filename, ".json")
@@ -78,9 +88,26 @@ func initLangs() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			langs[langname] = lang
+			langs[language.MustParse(langname)] = lang
 		}
 	}
+
+	tags := make([]language.Tag, 0, len(langs))
+	for t := range langs {
+		tags = append(tags, t)
+	}
+	langMatcher := language.NewMatcher(tags)
+
+	userTags := make([]language.Tag, 0)
+	if *langFlag != "" {
+		userTags = append(userTags, language.Make(*langFlag))
+	}
+	if os.Getenv("LANG") != "" {
+		userTags = append(userTags, language.Make(os.Getenv("LANG")))
+	}
+
+	tag, _, _ := langMatcher.Match(userTags...)
+	l = langs[tag]
 }
 
 func init() {
@@ -647,14 +674,9 @@ func sendBody(body string) {
 
 // main function
 func main() {
+	flag.Parse()
+
 	initLangs()
-	oslang := os.Getenv("LANG")
-	l = langs["en"] // fallback
-	for lang := range langs {
-		if strings.HasPrefix(oslang, lang) {
-			l = langs[lang]
-		}
-	}
 
 	// properly exit on receiving exit signal
 	go func() {
@@ -665,8 +687,11 @@ func main() {
 	}()
 
 	// parse project opened with the program or restore from autosafe
-	if len(os.Args) > 1 {
-		projectPath = os.Args[1]
+	var importpath string
+	if flag.NArg() >= 1 {
+		importpath = flag.Arg(0)
+	} else {
+		restoreFromAutosave()
 	}
 
 	// setup http listeners
