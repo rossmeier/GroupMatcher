@@ -1,0 +1,69 @@
+\definecolor{gray}{rgb}{0.3,0.3,0.3}
+\definecolor{contrast}{rgb}{0.0,0.70,0.90}
+
+\newcommand*\VerBar[2]{%
+{\color{#1}\rule{#2}{4.25cm}}}
+
+\newif\ifBgUse
+
+\AddEverypageHook{%
+\ifBgUse%
+\ifodd\value{page}
+\backgroundsetup{position={current page.north east},vshift=1.5cm,%
+contents={\VerBar{gray}{2\paperheight}}}%
+\else
+\backgroundsetup{position={current page.north west},vshift=-1.5cm,%
+contents={\VerBar{gray}{2\paperheight}}}%
+\fi%
+\BgMaterial%
+\fi}
+
+\newcommand*\circled[1]{\tikz[baseline=(char.base)]{
+            \node[shape=circle,draw,inner sep=0.2pt] (char) {#1};}}
+
+\renewcommand\maketitle[0]{
+% titlepage
+\input{tex/title}
+
+%reset formatting
+\fontsize{11pt}{11pt}\selectfont
+
+\tableofcontents
+\listoffigures
+}
+
+\renewcommand\cite[1]{\iflanguage{ngerman}{(vgl. #1)}{(#1)}}
+
+\renewcommand\quote[2]{\iflanguage{ngerman}{>>#2<< (#1)}{>>#1<< (#2)}}
+
+\newcommand{\hl}[1]{\textbf{\textcolor{contrast}{#1}}}
+
+\newcounter{mn}
+\newcommand\mpar[1]{\refstepcounter{mparcnt}\marginpar{\themparcnt#1}}
+
+\newcommand{\mnote}[1]{\refstepcounter{mn}\textsuperscript{\fontsize{6pt}{6pt}\selectfont\circled{\arabic{mn}}}\marginpar{\raggedright\fontsize{8pt}{8pt}\selectfont \textbf{\arabic{mn}:} \textcolor{contrast}{#1}}}
+
+\urlstyle{same}
+\expandafter\def\expandafter\UrlBreaks\expandafter{\UrlBreaks%  save the current one
+  \do\a\do\b\do\c\do\d\do\e\do\f\do\g\do\h\do\i\do\j%
+  \do\k\do\l\do\m\do\n\do\o\do\p\do\q\do\r\do\s\do\t%
+  \do\u\do\v\do\w\do\x\do\y\do\z\do\A\do\B\do\C\do\D%
+  \do\E\do\F\do\G\do\H\do\I\do\J\do\K\do\L\do\M\do\N%
+  \do\O\do\P\do\Q\do\R\do\S\do\T\do\U\do\V\do\W\do\X%
+  \do\Y\do\Z}
+
+
+\renewcommand{\arraystretch}{2}
+\renewcommand{\paragraph}[1]{\mbox{}\\ \textbf{#1:} \hspace{0.15em}}
+
+\setkeys{Gin}{width=\linewidth}
+
+\let\origfigure\figure
+\let\endorigfigure\endfigure
+
+\renewenvironment{figure}[1][tbph]{%
+    \origfigure[#1]%
+    \centering
+}{%
+    \endorigfigure
+}
