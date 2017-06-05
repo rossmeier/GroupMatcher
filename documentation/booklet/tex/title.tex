@@ -1,60 +1,24 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Vertical Line Title Page
-% LaTeX Template
-% Version 1.0 (27/12/12)
-%
-% This template has been downloaded from:
-% http://www.LaTeXTemplates.com
-%
-% Original author:
-% Peter Wilson (herries.press@earthlink.net)
-%
-% License:
-% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
-%
-% Instructions for using this template:
-% This title page compiles as is. If you wish to include this title page in
-% another document, you will need to copy everything before
-% \begin{document} into the preamble of your document. The title page is
-% then included using \titleGM within your document.
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newgeometry{top=1.5cm,bottom=0cm,left=0.5cm,right=0.5cm}
+\fontfamily{qag}\selectfont
+\setstretch{1.0}\selectfont
 
-%----------------------------------------------------------------------------------------
-%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
-%----------------------------------------------------------------------------------------
+\renewcommand{\headrulewidth}{0pt}
+\thispagestyle{fancy}
+\fancyhf{}
+\rhead{\textcolor{white}{\MakeUppercase{\thedate \hfill \theauthor}}}
 
-\newcommand*{\plogo}{\fbox{$\mathcal{PL}$}} % Generic publisher logo
+\vspace*{11.4cm}
+\hfill\begin{minipage}{\dimexpr\textwidth-1cm}
 
-%----------------------------------------------------------------------------------------
-%	TITLE PAGE
-%----------------------------------------------------------------------------------------
+\textcolor{white}{\fontsize{1.5cm}{1.5cm}\selectfont\MakeUppercase{\thetitle}}
+\\
+\\
+\\
+\textcolor{gray}{\fontsize{0.75cm}{0.75cm}\selectfont\MakeUppercase{\subtitle}}
 
-\newcommand*{\titleGM}{\begingroup % Create the command for including the title page in the document
-\hbox{ % Horizontal box
-\hspace*{0.2\textwidth} % Whitespace to the left of the title page
-\rule{1pt}{\textheight} % Vertical line
-\hspace*{0.05\textwidth} % Whitespace between the vertical line and title page text
-\parbox[b]{0.75\textwidth}{ % Paragraph box which restricts text to less than the width of the page
+\end{minipage}
+\begin{flushleft}
 
-{\noindent\Huge\bfseries \thetitle}\\[2\baselineskip] % Title
-%{\large \textit{Eine wissenschaftspropädeutische Seminararbeit \\[0.5\baselineskip] zum Thema Simulation mit Simplex3}}\\[4\baselineskip] % Tagline or further description
-{\copyright\ \theauthor} % Author name
 
-\vspace{0.5\textheight} % Whitespace between the title block and the publisher
-{\noindent \thedate }\\[\baselineskip] % Publisher and logo
-}}
-\endgroup}
-
-%----------------------------------------------------------------------------------------
-%	BLANK DOCUMENT
-%----------------------------------------------------------------------------------------
-
-%\begin{document}
-
-\pagenumbering{gobble} % Removes page numbers
-
-\titleGM % This command includes the title page
+\end{flushleft}
 \clearpage
-
-%\end{document}

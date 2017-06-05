@@ -1,10 +1,16 @@
-\definecolor{gray}{rgb}{0.3,0.3,0.3}
+\definecolor{gray}{rgb}{0.8,0.8,0.8}
 \definecolor{contrast}{rgb}{0.0,0.70,0.90}
 
 \newcommand*\VerBar[2]{%
 {\color{#1}\rule{#2}{4.25cm}}}
 
+\newcommand*\HorBar[2]{%
+{\color{#1}\rule{#2}{\paperwidth}}}
+
 \newif\ifBgUse
+
+\newif\ifBgF
+
 
 \AddEverypageHook{%
 \ifBgUse%
@@ -18,6 +24,13 @@ contents={\VerBar{gray}{2\paperheight}}}%
 \BgMaterial%
 \fi}
 
+\AddEverypageHook{
+\ifBgF
+\backgroundsetup{position={current page.north west},vshift=-0.5\paperwidth,%
+contents={\HorBar{gray}{30cm}}}%
+\BgMaterial%
+\fi}
+
 \newcommand*\circled[1]{\tikz[baseline=(char.base)]{
             \node[shape=circle,draw,inner sep=0.2pt] (char) {#1};}}
 
@@ -26,10 +39,9 @@ contents={\VerBar{gray}{2\paperheight}}}%
 \input{tex/title}
 
 %reset formatting
+\newgeometry{left = 2cm, right = 2cm, top = 2cm, bottom = 2cm, marginparwidth = 0cm, marginparsep = 0cm}
+\fontfamily{cmr}\selectfont
 \fontsize{11pt}{11pt}\selectfont
-
-\tableofcontents
-\listoffigures
 }
 
 \renewcommand\cite[1]{\iflanguage{ngerman}{(vgl. #1)}{(#1)}}
