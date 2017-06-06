@@ -475,7 +475,7 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 		res.WriteString(`<form action="/?edit" method="POST" target="form">`)
 		res.WriteString(`<div class="header"><ul><li><button type="submit">` + l["apply"] + `</button></li></ul><div class="switch"><button type="submit" formaction="/?storeEdited">` + l["assign"] + `</button><a onclick="astilectron.send('?edit')">` + l["edit"] + `</a></div></div>`)
 	} else {
-		res.WriteString(`<div class="header"><ul><li><a onclick="astilectron.send('/?clear')">` + l["clear"] + `</a></li><li><a onclick="astilectron.send('/?reset')">` + l["reset"] + `</a></li><li><a onclick="astilectron.send('/?match')">` + l["match_selected"] + `</a></li></ul><div class="switch"><a onclick="astilectron.send('/')">` + l["assign"] + `</a><a class="inactive" onclick="astilectron.send('?edit')">` + l["edit"] + `</a></div></div>`)
+		res.WriteString(`<div class="header"><ul><li><a onclick="astilectron.send('/?reset')">` + l["reset"] + `</a></li><li><a onclick="astilectron.send('/?match')">` + l["match_selected"] + `</a></li></ul><div class="switch"><a onclick="astilectron.send('/')">` + l["assign"] + `</a><a class="inactive" onclick="astilectron.send('?edit')">` + l["edit"] + `</a></div></div>`)
 	}
 
 	// sidebar
@@ -749,6 +749,15 @@ func main() {
 						w.Send(struct {
 							Cmd string
 						}{"openFile"})
+						return false
+					}},
+					{Label: astilectron.PtrStr(l["clear"]), OnClick: func(e astilectron.Event) bool {
+						form, err := url.ParseQuery("clear")
+						if err != nil {
+							log.Fatal(err)
+						}
+						body := handleChanges(form, "", false)
+						sendBody(body)
 						return false
 					}},
 					{Label: astilectron.PtrStr(l["save"]), OnClick: func(e astilectron.Event) bool {
