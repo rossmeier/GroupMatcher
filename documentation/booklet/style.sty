@@ -1,11 +1,11 @@
-\definecolor{gray}{rgb}{0.8,0.8,0.8}
-\definecolor{contrast}{rgb}{0.0,0.70,0.90}
+\definecolor{gray}{rgb}{0.7,0.7,0.7}
+\definecolor{contrast}{rgb}{0.6,0.6,0.3}
 
 \newcommand*\VerBar[2]{%
 {\color{#1}\rule{#2}{4.25cm}}}
 
 \newcommand*\HorBar[2]{%
-{\color{#1}\rule{#2}{\paperwidth}}}
+{\color{#1}\rule{#2}{2\paperwidth}}}
 
 \newif\ifBgUse
 
@@ -27,7 +27,7 @@ contents={\VerBar{gray}{2\paperheight}}}%
 \AddEverypageHook{
 \ifBgF
 \backgroundsetup{position={current page.north west},vshift=-0.5\paperwidth,%
-contents={\HorBar{gray}{30cm}}}%
+contents={\HorBar{contrast}{30cm}}}%
 \BgMaterial%
 \fi}
 
@@ -53,7 +53,7 @@ contents={\HorBar{gray}{30cm}}}%
 \newcounter{mn}
 \newcommand\mpar[1]{\refstepcounter{mparcnt}\marginpar{\themparcnt#1}}
 
-\newcommand{\mnote}[1]{\refstepcounter{mn}\textsuperscript{\fontsize{6pt}{6pt}\selectfont\circled{\arabic{mn}}}\marginpar{\raggedright\fontsize{8pt}{8pt}\selectfont \textbf{\arabic{mn}:} \textcolor{contrast}{#1}}}
+\newcommand{\mnote}[1]{\refstepcounter{mn}\textsuperscript{\fontsize{6pt}{6pt}\selectfont\circled{\arabic{mn}}}\marginpar{\raggedright\fontsize{8pt}{8pt}\selectfont \textcolor{white}{\textbf{\arabic{mn}:} #1}}}
 
 \urlstyle{same}
 \expandafter\def\expandafter\UrlBreaks\expandafter{\UrlBreaks%  save the current one
