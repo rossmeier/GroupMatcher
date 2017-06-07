@@ -32,7 +32,7 @@ contents={\HorBar{contrast}{30cm}}}%
 \fi}
 
 \newcommand*\circled[1]{\tikz[baseline=(char.base)]{
-            \node[shape=circle,draw,inner sep=0.2pt] (char) {#1};}}
+            \node[shape=circle,draw,inner sep=0.4pt] (char) {#1};}}
 
 \renewcommand\maketitle[0]{
 % titlepage
@@ -53,7 +53,7 @@ contents={\HorBar{contrast}{30cm}}}%
 \newcounter{mn}
 \newcommand\mpar[1]{\refstepcounter{mparcnt}\marginpar{\themparcnt#1}}
 
-\newcommand{\mnote}[1]{\refstepcounter{mn}\hspace{-0.25em}\textsuperscript{\fontsize{6pt}{6pt}\selectfont\circled{\arabic{mn}}}\marginpar{\raggedright\fontsize{8pt}{8pt}\selectfont \textcolor{white}{\textbf{\arabic{mn}:} #1}}}
+\newcommand{\mnote}[1]{\refstepcounter{mn}\hspace{-0.25em}\textsuperscript{\fontsize{5pt}{5pt}\selectfont\circled{\arabic{mn}}}\marginpar{\raggedright\fontsize{8pt}{8pt}\selectfont \textcolor{white}{\textbf{\arabic{mn}:} #1}}}
 
 \urlstyle{same}
 \expandafter\def\expandafter\UrlBreaks\expandafter{\UrlBreaks%  save the current one
