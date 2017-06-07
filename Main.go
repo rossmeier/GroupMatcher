@@ -35,6 +35,7 @@ type Message struct {
 }
 
 //go:generate go-bindata static/... locales templates
+//go:generate rsrc -ico static/icon.ico -o FILE.syso
 
 // map of all supported languages
 var langs map[language.Tag]map[string]string
