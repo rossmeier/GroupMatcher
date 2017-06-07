@@ -58,9 +58,6 @@ var darktheme bool
 // last path the project was saved to
 var projectPath string
 
-// project data as .gm text
-var gmStore string
-
 var w *astilectron.Window
 
 // scan language files from the locales directory and import them into the program
@@ -401,9 +398,9 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 	editmodeContent := ""
 	if form["edit"] != nil {
 		if data != "" {
-			gmStore = data
-			groupStore, personStore, err := parseInput.ParseGroupsAndPersons(strings.NewReader(gmStore))
+			groupStore, personStore, err := parseInput.ParseGroupsAndPersons(strings.NewReader(data))
 			if err != nil {
+				editmode = true
 				importError = err.Error()
 				editmodeContent = data
 			} else {
@@ -418,22 +415,13 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 					}{"save_as"})
 				}
 			}
-		}
-		editmode = true
-		if gmStore != "" {
-			editmodeContent = gmStore
 		} else {
+			editmode = true
 			editmodeContent, err = parseInput.FormatGroupsAndPersons(groups, persons)
 			if err != nil {
 				errors.WriteString(l[err.Error()] + "<br>")
 			}
 		}
-
-	}
-
-	// stores edited content if net saved yet
-	if form["storeEdited"] != nil {
-		gmStore = data
 	}
 
 	if importError == "success" {
@@ -473,7 +461,7 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 		// provide hidden iframe for post forms to avoid reload via server handler
 		res.WriteString(`<iframe name="form" style="display:none"></iframe>`)
 		res.WriteString(`<form action="/?edit" method="POST" target="form">`)
-		res.WriteString(`<div class="header"><ul><li><button type="submit">` + l["apply"] + `</button></li></ul><div class="switch"><button type="submit" formaction="/?storeEdited">` + l["assign"] + `</button><a onclick="astilectron.send('?edit')">` + l["edit"] + `</a></div></div>`)
+		res.WriteString(`<div class="header"><div class="switch"><button type="submit">` + l["assign"] + `</button><a onclick="astilectron.send('?edit')">` + l["edit"] + `</a></div></div>`)
 	} else {
 		res.WriteString(`<div class="header"><ul><li><a onclick="astilectron.send('/?reset')">` + l["reset"] + `</a></li><li><a onclick="astilectron.send('/?match')">` + l["match_selected"] + `</a></li></ul><div class="switch"><a onclick="astilectron.send('/')">` + l["assign"] + `</a><a class="inactive" onclick="astilectron.send('?edit')">` + l["edit"] + `</a></div></div>`)
 	}
@@ -631,7 +619,6 @@ func handleSaveAs(filepath string) (err error) {
 			return err
 		}
 	}
-	gmStore = text
 	_, err = file.WriteString(text)
 	return err
 }

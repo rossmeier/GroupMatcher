@@ -17,11 +17,11 @@
 \usepackage{tgadventor}
 \usepackage{fancyhdr}
 \usepackage{setspace}
+\usepackage{palatino}
 \usepackage{style}
 
 \begin{document}
     %----- document settings ---------------------------------------------------
-
 	%language settings
 		\selectlanguage{ngerman}
     %set text alignment
@@ -41,7 +41,7 @@
 
 	\title{GroupMatcher}
 	\def \subtitle {Handbuch}
-	\author{Justus Roßmeier, Max Obermeier}
+	\author{Justus Roßmeier}
 	\date{\today}
 
 	%----- document information ----------------------------------------------------
@@ -61,15 +61,17 @@
     %----- content -------------------------------------------------------------
 
 	\newgeometry{inner = 1.5cm, outer = 4cm, marginparwidth = 2.75cm, marginparsep = 0.75cm}
-	%format font
-		\renewcommand*\rmdefault{qag}
 	\pagenumbering{arabic}
-
-
-
+	%select default fonts
+		\renewcommand*\rmdefault{qag}
+		\fontfamily{ppl}\selectfont
 	\BgUsetrue
 
+
 	\input{tex/einfuehrung}
+
+
+
 
 
 
