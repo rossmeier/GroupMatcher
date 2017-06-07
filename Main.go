@@ -693,10 +693,10 @@ func main() {
 	time.Sleep(time.Millisecond * 10)
 	// Initialize astilectron
 	var a, _ = astilectron.New(astilectron.Options{
-		AppName: "GroupMatcher",
-		//AppIconDefaultPath: "<your .png icon>",
-		//AppIconDarwinPath:  "<your .icns icon>",
-		BaseDirectoryPath: "cache",
+		AppName:            "GroupMatcher",
+		AppIconDefaultPath: "static/icon.png",
+		AppIconDarwinPath:  "static/icon.ico",
+		BaseDirectoryPath:  "cache",
 	})
 	defer a.Close()
 
