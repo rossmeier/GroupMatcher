@@ -160,6 +160,16 @@ func setDarkTheme(dark bool) {
 	})
 }
 
+//opens documentation in current language
+func openDoc() {
+	switch runtime.GOOS {
+	case "linux":
+		exec.Command("xdg-open", "documentation/"+l["#name"]+".pdf").Start()
+	case "windows":
+		exec.Command("cmd", "/c", "start", "documentation/"+l["#name"]+".pdf").Start()
+	}
+}
+
 // http handler function for the about GUI
 func handleAbout(res http.ResponseWriter, req *http.Request) {
 
@@ -835,7 +845,10 @@ func main() {
 			{
 				Label: astilectron.PtrStr(l["help"]),
 				SubMenu: []*astilectron.MenuItemOptions{
-					{Label: astilectron.PtrStr(l["help"]), Role: astilectron.MenuItemRoleHelp}, // TODO: open documentation
+					{Label: astilectron.PtrStr(l["help"]), Role: astilectron.MenuItemRoleHelp, OnClick: func(e astilectron.Event) bool {
+						openDoc()
+						return false
+					}},
 					{Label: astilectron.PtrStr(l["about"]), Role: astilectron.MenuItemRoleAbout, OnClick: func(e astilectron.Event) bool {
 						go func() {
 							aboutWindow, err := a.NewWindow(urlString+"/about", &astilectron.WindowOptions{
