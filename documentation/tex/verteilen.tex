@@ -1,0 +1,23 @@
+\chapter{Verteilen der Personen}
+\label{ch:verteilen_der_personen}
+
+Im Verteilungsverfahren liegt die größte Stärke des >>GroupMatcher<<. Haben sie nämlich das Projekt erstellt, so müssen sie nur im Zuordnungsmodus auf den Knopf >>verteilen<< \mnote{Den Knopf finden sie in der Bedienzeile.} klicken und der Algorithmus des Programms verteilt die Personen auf die Gruppen. Danach können sie eine manuelle Nachverteilung vornehmen, falls spezielle Wünsche vorliegen. Sie müssen sich keine Gedanken um die Gerechtigkeit des Algorithmus machen, da dieser nach dem Zufallsprinzip arbeitet. Die Reihenfolge, in der sie die Personen in der >>.gm<< Datei definieren spielt also keine Rolle.
+
+\section{Verteilungsalgorithmus}
+\label{sec:verteilungsalgorithmus}
+
+\paragraph{Prioritäten} Der Verteilungsalgorithmus arbeitet nach folgenden Prioritäten:
+\begin{enumerate}
+	\item jede Person muss einer Gruppe zugeordnet werden
+	\item keine Person darf einer Gruppe zugeordnet werden, die nicht in seinen Wünschen enthalten ist
+	\item Gruppen dürfen nur entfernt werden, wenn nicht genügend Personen existieren, in deren Wünschen die Gruppe enthalten ist, um die Minimalgröße zu erfüllen
+	\item die Minimal- und Maximalgröße einer Gruppe darf nicht über- bzw. unterschritten werden
+	\item die Quote \mnote{Die Quote stellt den durchschnittlich erfüllten Wunsch dar. Wurden nur Erstwünsche erfüllt, so ist die Quote also 1. Wurden zur Hälfte Erstwünsche und zur anderen Hälfte Zweitwünsche erfüllt, so beträgt die Quote 1.5. } soll bestmöglich sein
+\end{enumerate}
+
+\paragraph{Wegfallen einer Gruppe} Sind für eine Gruppe zu wenige Wünsche vorhanden, so wird diese und die entsprechenden Wünsche gelöscht. Darf dies nicht auftreten, so muss speziell für diese Gruppe die Mindestgröße angepasst werden, wie es in Abschnitt \ref{sec:>>.gm<<_syntax} erläutert wird. Soll dies rückgängig gemacht werden, so müssen sie zum vorherigen Speicherstand zurückkehren. Dazu wählen sie >>Datei<< und >>Schließen<< und wählen dann über >>Datei<< und >>Speichern unter...<< die nach dem Erstellen angelegte >>.gm<< Datei aus. Nun können sie, vor dem erneuten ausführen des Verteilungsalgorithmus, eine spezielle Mindest- und Maximalgröße für die betroffene Gruppe festlegen.
+
+\section{Nachverteilung}
+\label{sec:nachverteilung}
+
+Wollen sie, aus welchem Grund auch immer, im nachhinein eine Änderung vornehmen, so muss dies nach dem Betätigen des Verteilungsalgorithmus geschehen, da dieser keine bereits zugewiesenen Personen akzeptiert. Die verfügbaren Werkzeuge zum Umverteilen werden in den Abschnitten \ref{sec:seitenleiste} und \ref{sec:arbeitsfläche} erklärt. Sind sie mit der Verteilung zufrieden sollten die das Projekt wiederum abspeichern \mnote{>>Datei<< und >>Speichern<<}.

@@ -1,0 +1,40 @@
+\chapter{Fehlermeldungen}
+\label{ch:fehlermeldungen}
+
+\paragraph{>>Verteilen nicht möglich: Zu viele oder zu wenige Personen für gewählte Gruppenkonfiguration<<} Die Gesamtanzahl der Personen ist zu groß oder zu klein für die Gruppengrößen.
+
+\paragraph{>>Übersetzungsfehler:<<} Alle Fehlermeldungen, beziehen sich auf den Übersetzungsvorgang der >>.gm<< Datei.
+
+\paragraph{>>Syntaxfehler<<} Die >>.gm<< Syntax wurde nicht eingehalten.
+
+\paragraph{>>Indikator für Gruppen nicht gefunden<<} Das >>S<<, der Indikator für die Gruppen wurde nicht gefunden.
+
+\paragraph{>>mehrfache Benutzung eines Gruppennamens<<} Jede Gruppe muss einen einzigartigen Namen haben. Achten sie dabei auch auf den Personenindikator >>P<<, der nicht alleinstehend als Gruppenname benutzt werden darf.
+
+\paragraph{>>mehrfache Benutzung eines Personennamens<<} Jede Person muss einen einzigartigen Namen haben.
+
+\paragraph{>>leere Datei<<} Die importierte Datei ist leer.
+
+\paragraph{>>Indikator für Personen nicht gefunden<<} Der Personenindikator >>P<< sollte direkt unter der Gruppenauflistung stehen.
+
+\paragraph{>>leeres Argument<<} Hinter einem Semikolon muss immer ein Inhalt sein. Wenn sie einer Person z.B. nur zwei Wünsche zuordnen wollen, darf diese Zeile auch nur zwei Semikolons enthalten.
+
+\paragraph{>>fehlendes Argument<<} Jede Person muss mindestens einen Wunsch haben. Die Gruppenstärken müssen entweder allgemein hinter dem Gruppenindikator, oder speziell für jede einzelne Gruppen bei der Gruppenaufzählung festgelegt werden.
+
+\paragraph{>>eine Gruppe ist nicht vorhanden<<} Alle Gruppen, die in Wünschen auftauchen, müssen vorher in der Gruppenauflistung definiert werden.
+
+\paragraph{>>eine Person konnte nicht zugeteilt werden<<} Dieser Fehler kann auftreten, wenn bei einer Person alle Wünsche ungültig sind, weil die entsprechenden Gruppen aufgrund von Unterbesetzung entfernt wurden.
+
+\paragraph{>>Folgende Gruppe(n) kam(en) nicht zusammen:<<} Ist eine Gruppe unterbesetzt, d.h. kann die Mindestgröße nicht erreicht werden, wird sie automatisch gelöscht, und entsprechende Wünsche entfernt. Danach wird versucht, ohne diese Gruppe eine Verteilung zu finden.
+
+\paragraph{>>Sprache nicht gefunden<<} Dieser Fehler kann nur auftreten, wenn in der URL, oder im Programmverzeichnis manuelle Änderungen vorgenommen wurden.
+
+\paragraph{>>Keine Gruppen vorhanden<<} Tritt auf, wenn beim Exportieren, oder beim Wechseln in den Bearbeitungsmodus keine Gruppen vorhanden sind.
+
+\paragraph{>>Es sind bereits Personen zugeteilt<<} Der automatische Verteilungsvorgang kann nur gestartet werden, wenn alle Personen unzugeordnet sind.
+
+\paragraph{>>Gruppenkombination(en) überfüllt:<<} Es werden alle Gruppenkombinationen aufgelistet, die überfüllt sind. Dies tritt auf, wenn z.B. die Gruppen x,y eine Maximalgröße von je zwei Personen haben, aber fünf Personen nur die Wünsche x und y haben.
+
+\paragraph{>>Zeitüberschreitung - keine Lösung gefunden<<} Dieser Fehler tritt auf, wenn der Verteilungsprozess nach einer Minute immer noch keine Lösung gefunden hat. Dies passiert in der Regel nur dann, wenn eine komplexe Form eine Gruppenkombinationsfehlers vorliegt, die vom Algorithmus nicht erfasst wird, und keine Lösung möglich ist.
+
+\paragraph{>>Zeitüberschreitung - Lösung gefunden<<} Dieser Fehler tritt auf, wenn der Verteilungsprozess nach zehn Sekunden noch nicht für alle Versuche Lösungen gefunden wurden. Dies tritt v.a. dann auf, wenn die Gruppengrößen sehr eng gewählt wurden, und somit nur sehr wenige Lösungsmöglichkeiten vorhanden sind.
