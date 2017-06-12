@@ -55,19 +55,23 @@
 
 	\BgFfalse
 
+
 	\tableofcontents
+
 
     %----- title ---------------------------------------------------------------
 
     %----- content -------------------------------------------------------------
 
 	\newgeometry{inner = 1.5cm, outer = 4cm, marginparwidth = 2.75cm, marginparsep = 0.75cm}
+	\mbox{}
+	\thispagestyle{empty}
+	\newpage
 	\pagenumbering{arabic}
 	%select default fonts
 		\renewcommand*\rmdefault{qag}
 		\fontfamily{ppl}\selectfont
 	\BgUsetrue
-
 
 	\input{tex/einfuehrung}
 	\input{tex/installation}
@@ -77,7 +81,12 @@
 	\input{tex/abschliessen}
 	\input{tex/fehlermeldungen}
 
-
+	\newpage
+	\BgUsefalse
+	\pagenumbering{gobble}
+	\mbox{}
+	\thispagestyle{empty}
+	\newpage
 
 
 
