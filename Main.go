@@ -27,6 +27,7 @@ import (
 	"github.com/veecue/GroupMatcher/matching"
 	"github.com/veecue/GroupMatcher/parseInput"
 	"golang.org/x/text/language"
+	"github.com/asticode/go-astisplash"
 )
 
 type Message struct {
@@ -36,6 +37,7 @@ type Message struct {
 
 //go:generate go-bindata static/... locales templates
 //go:generate rsrc -ico static/icon.ico -o FILE.syso
+//go:generate go-astilectron-bindata
 
 // map of all supported languages
 var langs map[language.Tag]map[string]string
@@ -698,6 +700,19 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Build splasher
+	var s *astisplash.Splasher
+	if s, err = astisplash.New(); err != nil {
+		log.Fatal(err)
+	}
+	defer s.Close()
+
+	// Splash
+	var sp *astisplash.Splash
+	if sp, err = s.Splash("static/splash.png"); err != nil {
+		log.Fatal(err)
+	}
+
 	go func() {
 		log.Fatal(http.Serve(listener, nil))
 	}()
@@ -711,8 +726,17 @@ func main() {
 	})
 	defer a.Close()
 
+	a.SetProvisioner(astilectron.NewDisembedderProvisioner(Disembed, "a", "e"))
+
+	a.HandleSignals()
+
 	err = a.Start()
 	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Close splash
+	if err = sp.Close(); err != nil {
 		log.Fatal(err)
 	}
 
