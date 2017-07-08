@@ -725,7 +725,7 @@ func main() {
 	})
 	defer a.Close()
 
-	a.SetProvisioner(astilectron.NewDisembedderProvisioner(Disembed, "a", "e"))
+	a.SetProvisioner(astilectron_bindata.NewProvisioner(Disembed))
 
 	a.HandleSignals()
 
