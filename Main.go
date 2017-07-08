@@ -28,6 +28,7 @@ import (
 	"github.com/veecue/GroupMatcher/parseInput"
 	"golang.org/x/text/language"
 	"github.com/asticode/go-astisplash"
+	"github.com/veecue/go-astilectron-bindata"
 )
 
 type Message struct {
@@ -726,7 +727,7 @@ func main() {
 	})
 	defer a.Close()
 
-	a.SetProvisioner(astilectron.NewDisembedderProvisioner(Disembed, "a", "e"))
+	a.SetProvisioner(astilectron_bindata.NewProvisioner(Disembed))
 
 	a.HandleSignals()
 
