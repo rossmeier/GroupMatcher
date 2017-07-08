@@ -27,7 +27,6 @@ import (
 	"github.com/veecue/GroupMatcher/matching"
 	"github.com/veecue/GroupMatcher/parseInput"
 	"golang.org/x/text/language"
-	"github.com/asticode/go-astisplash"
 )
 
 type Message struct {
@@ -709,7 +708,7 @@ func main() {
 
 	// Splash
 	var sp *astisplash.Splash
-	if sp, err = s.Splash("static/splash.png"); err != nil {
+	if sp, err = s.Splash("static/loadscreen.png"); err != nil {
 		log.Fatal(err)
 	}
 
