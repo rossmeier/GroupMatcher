@@ -28,6 +28,7 @@ import (
 	"github.com/veecue/GroupMatcher/parseInput"
 	"github.com/veecue/go-astilectron-bindata"
 	"golang.org/x/text/language"
+	"path"
 )
 
 type Message struct {
@@ -166,9 +167,9 @@ func setDarkTheme(dark bool) {
 func openDoc() {
 	switch runtime.GOOS {
 	case "linux":
-		exec.Command("xdg-open", "https://github.com/veecue/GroupMatcher/blob/dev/documentation/"+l["#name"]+".pdf").Start()
+		exec.Command("xdg-open", "https://github.com/veecue/GroupMatcher/blob/master/documentation/"+l["#name"]+".pdf").Start()
 	case "windows":
-		exec.Command("cmd", "/c", "start", "https://github.com/veecue/GroupMatcher/blob/dev/documentation/"+l["#name"]+".pdf").Start()
+		exec.Command("cmd", "/c", "start", "https://github.com/veecue/GroupMatcher/master/dev/documentation/"+l["#name"]+".pdf").Start()
 	}
 }
 
@@ -717,11 +718,38 @@ func main() {
 		log.Fatal(http.Serve(listener, nil))
 	}()
 	time.Sleep(time.Millisecond * 10)
+
+	// Extract icons
+	tempPath := path.Join(os.TempDir(), "astilectron")
+	err = os.Mkdir(tempPath, 0755)
+	if err != nil && !os.IsExist(err) {
+		log.Fatal(err)
+	}
+	iconPng, err := Asset("static/icon.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+	iconPngPath := path.Join(tempPath, "icon.png")
+	err = ioutil.WriteFile(iconPngPath, iconPng, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	iconIco, err := Asset("static/icon.ico")
+	if err != nil {
+		log.Fatal(err)
+	}
+	iconIcoPath := path.Join(tempPath, "icon.ico")
+	err = ioutil.WriteFile(iconIcoPath, iconIco, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Initialize astilectron
 	var a, _ = astilectron.New(astilectron.Options{
 		AppName:            "GroupMatcher",
-		AppIconDefaultPath: "static/icon.png",
-		AppIconDarwinPath:  "static/icon.ico",
+		AppIconDefaultPath: iconPngPath,
+		AppIconDarwinPath:  iconIcoPath,
 		BaseDirectoryPath:  os.TempDir(),
 	})
 	defer a.Close()
