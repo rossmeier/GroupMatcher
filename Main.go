@@ -28,7 +28,6 @@ import (
 	"github.com/veecue/GroupMatcher/parseInput"
 	"golang.org/x/text/language"
 	"github.com/veecue/go-astilectron-bindata"
-	"path"
 )
 
 type Message struct {
@@ -723,7 +722,7 @@ func main() {
 		AppName:            "GroupMatcher",
 		AppIconDefaultPath: "static/icon.png",
 		AppIconDarwinPath:  "static/icon.ico",
-		BaseDirectoryPath:  path.Join(os.TempDir(), "astilectron"),
+		BaseDirectoryPath:  os.TempDir(),
 	})
 	defer a.Close()
 
