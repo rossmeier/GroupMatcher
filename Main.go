@@ -27,8 +27,8 @@ import (
 	"github.com/veecue/GroupMatcher/matching"
 	"github.com/veecue/GroupMatcher/parseInput"
 	"golang.org/x/text/language"
-	"github.com/asticode/go-astisplash"
 	"github.com/veecue/go-astilectron-bindata"
+	"path"
 )
 
 type Message struct {
@@ -702,7 +702,7 @@ func main() {
 	}
 
 	// Build splasher
-	var s *astisplash.Splasher
+	/*var s *astisplash.Splasher
 	if s, err = astisplash.New(); err != nil {
 		log.Fatal(err)
 	}
@@ -712,7 +712,7 @@ func main() {
 	var sp *astisplash.Splash
 	if sp, err = s.Splash("static/splash.png"); err != nil {
 		log.Fatal(err)
-	}
+	}*/
 
 	go func() {
 		log.Fatal(http.Serve(listener, nil))
@@ -723,7 +723,7 @@ func main() {
 		AppName:            "GroupMatcher",
 		AppIconDefaultPath: "static/icon.png",
 		AppIconDarwinPath:  "static/icon.ico",
-		BaseDirectoryPath:  "cache",
+		BaseDirectoryPath:  path.Join(os.TempDir(), "astilectron"),
 	})
 	defer a.Close()
 
@@ -735,12 +735,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+/*
 	// Close splash
 	if err = sp.Close(); err != nil {
 		log.Fatal(err)
 	}
-
+*/
 	urlString := "http://" + listener.Addr().String()
 	if projectPath != "" {
 		urlString += "?import=" + projectPath

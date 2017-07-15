@@ -1,3 +1,11 @@
+## Build File
+out
+tmp
+
+## Go-bindata
+bindata.go
+astilectron_vendor_*.go
+
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
