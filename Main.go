@@ -710,7 +710,7 @@ func main() {
 
 	// Splash
 	var sp *astisplash.Splash
-	if sp, err = s.Splash("static/splash.png"); err != nil {
+	if sp, err = s.Splash("static/loadscreen.png"); err != nil {
 		log.Fatal(err)
 	}*/
 
