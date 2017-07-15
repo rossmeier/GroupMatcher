@@ -22,13 +22,14 @@ import (
 	"strings"
 	"time"
 
+	"path"
+
 	"github.com/asticode/go-astilectron"
 	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/veecue/GroupMatcher/matching"
 	"github.com/veecue/GroupMatcher/parseInput"
-	"golang.org/x/text/language"
 	"github.com/veecue/go-astilectron-bindata"
-	"path"
+	"golang.org/x/text/language"
 )
 
 type Message struct {
@@ -167,9 +168,9 @@ func setDarkTheme(dark bool) {
 func openDoc() {
 	switch runtime.GOOS {
 	case "linux":
-		exec.Command("xdg-open", "documentation/"+l["#name"]+".pdf").Start()
+		exec.Command("xdg-open", "https://github.com/veecue/GroupMatcher/blob/dev/documentation/"+l["#name"]+".pdf").Start()
 	case "windows":
-		exec.Command("cmd", "/c", "start", "documentation/"+l["#name"]+".pdf").Start()
+		exec.Command("cmd", "/c", "start", "https://github.com/veecue/GroupMatcher/blob/dev/documentation/"+l["#name"]+".pdf").Start()
 	}
 }
 
@@ -735,12 +736,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-/*
-	// Close splash
-	if err = sp.Close(); err != nil {
-		log.Fatal(err)
-	}
-*/
+	/*
+		// Close splash
+		if err = sp.Close(); err != nil {
+			log.Fatal(err)
+		}
+	*/
 	urlString := "http://" + listener.Addr().String()
 	if projectPath != "" {
 		urlString += "?import=" + projectPath
