@@ -1,5 +1,7 @@
 #!/bin/bash
 
+RELEASENAME=GreatMall
+
 buildTarget() {
   export GOOS=$1
   export GOARCH=$2
@@ -16,21 +18,29 @@ buildTarget() {
 
   if [ "$GOOS" == "windows" ]
   then
-    cp ../GroupMatcherDE.lnk tmp/
-    cp ../GroupMatcherEN.lnk tmp/
+    rsrc -ico ../static/icon.ico -o ../FILE.syso
+    cp ../GroupMatcherDE.exe tmp/
+    cp ../GroupMatcherEN.exe tmp/
   fi
 
   cd tmp
     if [ "$GOOS" == "windows" ]
     then
         go build -ldflags -H=windowsgui github.com/veecue/GroupMatcher
-        zip -r ../out/GroupMatcher-GreatMall-$GOOS-$GOARCH.zip *
+        echo packing zip file...
+        zip -r ../out/GroupMatcher-$RELEASENAME-$GOOS-$GOARCH.zip *
     else
         go build github.com/veecue/GroupMatcher
         echo packing tar file...
-        tar -czf ../out/GroupMatcher-GreatMall-$GOOS-$GOARCH.tar.gz *
+        tar -czf ../out/GroupMatcher-$RELEASENAME-$GOOS-$GOARCH.tar.gz *
     fi
   cd ..
+
+  if [ "$GOOS" == "windows" ]
+  then
+    rm ../FILE.syso
+  fi
+
   rm -rf tmp
 }
 rm -rf out
@@ -38,7 +48,8 @@ mkdir out
 
 COPY_FILES="locales static"
 
-OS="linux darwin windows"
+#OS="linux darwin windows"
+OS="windows"
 ARCH="386 amd64"
 
 for o in $OS

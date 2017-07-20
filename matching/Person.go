@@ -2,8 +2,8 @@ package matching
 
 import (
 	"math/rand"
-	"strings"
 	"sort"
+	"strings"
 )
 
 type Person struct {
@@ -50,12 +50,12 @@ func (s slicePerson) Len() int {
 	return len(s)
 }
 
-func (s slicePerson) Less(i,j int) bool {
+func (s slicePerson) Less(i, j int) bool {
 	return strings.Compare(s[i].Name, s[j].Name) < 0
 }
 
-func (s slicePerson) Swap(i,j int) {
-	s[i],s[j] = s[j],s[i]
+func (s slicePerson) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
 }
 
 func Sort(s []*Person) {

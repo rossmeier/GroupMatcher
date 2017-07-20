@@ -2,17 +2,16 @@
 package parseInput
 
 import (
-	"github.com/veecue/GroupMatcher/matching"
 	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/tealeg/xlsx"
+	"github.com/veecue/GroupMatcher/matching"
 	"io"
 	"strconv"
 	"strings"
-	"github.com/tealeg/xlsx"
 )
-
 
 //Converts the current groups and persons (of package matcher) into a .xlsx document and saves into the project folder
 func FormatGroupsAndPersonsToExcel(groups []*matching.Group, persons []*matching.Person, l map[string]string, printTotal bool) (*xlsx.File, error) {
@@ -33,57 +32,57 @@ func FormatGroupsAndPersonsToExcel(groups []*matching.Group, persons []*matching
 
 		//create group header
 		sheet.AddRow()
-		addCell(sheet, len(sheet.Rows) - 1, l["group name"])
-		addCell(sheet, len(sheet.Rows) - 1, l["min_size"])
-		addCell(sheet, len(sheet.Rows) - 1, l["max_size"])
-		addCell(sheet, len(sheet.Rows) - 1, l["group_size"])
+		addCell(sheet, len(sheet.Rows)-1, l["group name"])
+		addCell(sheet, len(sheet.Rows)-1, l["min_size"])
+		addCell(sheet, len(sheet.Rows)-1, l["max_size"])
+		addCell(sheet, len(sheet.Rows)-1, l["group_size"])
 
 		//insert groups
 		for i := range groups {
 			sheet.AddRow()
-			addCell(sheet, len(sheet.Rows) - 1, groups[i].Name)
-			addCell(sheet, len(sheet.Rows) - 1, strconv.Itoa(groups[i].MinSize))
-			addCell(sheet, len(sheet.Rows) - 1, strconv.Itoa(groups[i].Capacity))
-			addCell(sheet, len(sheet.Rows) - 1, strconv.Itoa(len(groups[i].Members)))
+			addCell(sheet, len(sheet.Rows)-1, groups[i].Name)
+			addCell(sheet, len(sheet.Rows)-1, strconv.Itoa(groups[i].MinSize))
+			addCell(sheet, len(sheet.Rows)-1, strconv.Itoa(groups[i].Capacity))
+			addCell(sheet, len(sheet.Rows)-1, strconv.Itoa(len(groups[i].Members)))
 		}
 
 		//create persons header
 		sheet.AddRow()
 		sheet.AddRow()
-		addCell(sheet, len(sheet.Rows) - 1, l["person name"])
-		addCell(sheet, len(sheet.Rows) - 1, l["1stchoice"])
-		addCell(sheet, len(sheet.Rows) - 1, l["2ndchoice"])
-		addCell(sheet, len(sheet.Rows) - 1, l["3rdchoice"])
+		addCell(sheet, len(sheet.Rows)-1, l["person name"])
+		addCell(sheet, len(sheet.Rows)-1, l["1stchoice"])
+		addCell(sheet, len(sheet.Rows)-1, l["2ndchoice"])
+		addCell(sheet, len(sheet.Rows)-1, l["3rdchoice"])
 
 		//insert persons
-		for i := range persons{
+		for i := range persons {
 			sheet.AddRow()
-			addCell(sheet, len(sheet.Rows) - 1, persons[i].Name)
+			addCell(sheet, len(sheet.Rows)-1, persons[i].Name)
 			assigned := persons[i].GetGroup(groups)
 			for j := range persons[i].Preferences {
-				addCell(sheet, len(sheet.Rows) - 1, persons[i].Preferences[j].Name)
+				addCell(sheet, len(sheet.Rows)-1, persons[i].Preferences[j].Name)
 				//set different style for active preference
 				if assigned != nil {
 					if assigned.Name == persons[i].Preferences[j].Name {
-						sheet.Rows[len(sheet.Rows) - 1].Cells[len(sheet.Rows[len(sheet.Rows) - 1].Cells) - 1].SetStyle(activeStyle)
+						sheet.Rows[len(sheet.Rows)-1].Cells[len(sheet.Rows[len(sheet.Rows)-1].Cells)-1].SetStyle(activeStyle)
 					}
 				}
 			}
 
 		}
-	}else {
+	} else {
 		//create persons header
 		sheet.AddRow()
-		addCell(sheet, len(sheet.Rows) - 1, l["person name"])
-		addCell(sheet, len(sheet.Rows) - 1, l["group_assigned"])
+		addCell(sheet, len(sheet.Rows)-1, l["person name"])
+		addCell(sheet, len(sheet.Rows)-1, l["group_assigned"])
 
 		//insert persons
-		for i := range persons{
+		for i := range persons {
 			sheet.AddRow()
-			addCell(sheet, len(sheet.Rows) - 1, persons[i].Name)
+			addCell(sheet, len(sheet.Rows)-1, persons[i].Name)
 			assigned := persons[i].GetGroup(groups)
 			if assigned != nil {
-				addCell(sheet, len(sheet.Rows) - 1, assigned.Name)
+				addCell(sheet, len(sheet.Rows)-1, assigned.Name)
 			}
 		}
 	}
@@ -171,7 +170,6 @@ func ParseGroupsAndPersons(data io.Reader) ([]*matching.Group, []*matching.Perso
 		text := scanner.Text()
 		text = strings.TrimSpace(text)
 
-
 		if len(text) != 0 {
 			//if line contains person initializer set reading mode to 1, foundPersons to true and continue with next line
 			if text == "P" {
@@ -202,12 +200,12 @@ func ParseGroupsAndPersons(data io.Reader) ([]*matching.Group, []*matching.Perso
 					if !foundGroups {
 						//in case groups were not declared before person initializer was found
 						return nil, nil, errors.New("group_initializer_not_found")
-					}else {
+					} else {
 						//otherwise add line number to error message
 						errString = err.Error() + strconv.Itoa(count)
 					}
 					return nil, nil, errors.New(errString)
-				}else{
+				} else {
 					//if no error occured add person to persons slice
 					persons = append(persons, person)
 				}
@@ -224,7 +222,7 @@ func ParseGroupsAndPersons(data io.Reader) ([]*matching.Group, []*matching.Perso
 						errString = "person_initializer_not_found"
 					}
 					return nil, nil, errors.New(errString)
-				}else {
+				} else {
 					//check for double use of a group name
 					if matching.FindGroup(group.Name, groups) != nil {
 						errString := "group_name_not_unique" + strconv.Itoa(count)
@@ -340,9 +338,8 @@ func parseGroup(str string, minSize, capacity int) (*matching.Group, error) {
 	return matching.NewGroup(name, cap, min), nil
 }
 
-
 //adds a Cell to the given row of a .xlsx sheet
 func addCell(sheet *xlsx.Sheet, row int, value string) {
 	sheet.Rows[row].AddCell()
-	sheet.Rows[row].Cells[len(sheet.Rows[row].Cells) - 1].SetValue(value)
+	sheet.Rows[row].Cells[len(sheet.Rows[row].Cells)-1].SetValue(value)
 }

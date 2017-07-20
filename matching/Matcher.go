@@ -2,11 +2,11 @@
 package matching
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"sync"
-	"errors"
 	"time"
-	"fmt"
 )
 
 type Matcher struct {
@@ -96,7 +96,7 @@ func (m *Matcher) matchMany(n int, hardTimeout time.Duration, softTimeout time.D
 	start := time.Now()
 	found := false
 
-	defer func(){
+	defer func() {
 		dur := time.Since(start)
 		if dur > hardTimeout {
 			err = errors.New("hardtimeout")
@@ -132,8 +132,8 @@ func (m *Matcher) matchMany(n int, hardTimeout time.Duration, softTimeout time.D
 		}(i)
 	}
 	wg.Wait()
-	matchers = make([]*Matcher,0)
-	for _,m := range ms {
+	matchers = make([]*Matcher, 0)
+	for _, m := range ms {
 		if m != nil {
 			matchers = append(matchers, m)
 		}
@@ -168,11 +168,11 @@ func (m *Matcher) correct() bool {
 		for j := range m.Groups {
 			if len(m.Groups[j].Members) < m.Groups[j].MinSize {
 				amountNeeded := m.Groups[j].MinSize - len(m.Groups[j].Members)
-				for k := 0;k < amountNeeded;k++ {
+				for k := 0; k < amountNeeded; k++ {
 					freeC, neededC := m.getCandidates(m.Groups[j])
 					if len(freeC) != 0 {
 						m.Groups[j].insertBestFrom(freeC, m)
-					}else{
+					} else {
 						m.Groups[j].insertBestFrom(neededC, m)
 						flag = false
 					}
@@ -182,13 +182,13 @@ func (m *Matcher) correct() bool {
 	}
 	if flag {
 		return true
-	}else{
+	} else {
 		return false
 	}
 }
 
 //returns all candidates for a special group
-func (m *Matcher) getCandidates(preference *Group) (freeC, neededC []*Person){
+func (m *Matcher) getCandidates(preference *Group) (freeC, neededC []*Person) {
 	var pref, group, member int
 	for pref = 0; pref < m.getMaxPref(); pref++ {
 		for group = range m.Groups {
@@ -198,7 +198,7 @@ func (m *Matcher) getCandidates(preference *Group) (freeC, neededC []*Person){
 						if m.Groups[group].Members[member].Preferences[pref] == preference {
 							if m.Groups[group].MinSize >= len(m.Groups[group].Members) {
 								neededC = append(neededC, m.Groups[group].Members[member])
-							}else{
+							} else {
 								freeC = append(freeC, m.Groups[group].Members[member])
 							}
 						}
@@ -250,11 +250,11 @@ func (m *Matcher) CheckMatcher() (error, string) {
 	}
 
 	//check for basic combination problems
-	//the algorithm doesn't detect an error if there are two combinations which necessaryly need space in one group 
+	//the algorithm doesn't detect an error if there are two combinations which necessaryly need space in one group
 	needComma = false
 	var combinations []Combination
 	//get all combinations and subcombinations
-	m.sortByPrefLen()//sort persons by preference length, so that subconfigurations are also put into the main-configuration
+	m.sortByPrefLen() //sort persons by preference length, so that subconfigurations are also put into the main-configuration
 	for i := range m.Persons {
 		if !addToAnyIfFitting(m.Persons[i].Preferences, combinations) {
 			var configuration []Part
@@ -273,7 +273,7 @@ func (m *Matcher) CheckMatcher() (error, string) {
 			//the capacity a group adds to the totalCapacity is limited by the larger one of Capacity or CandidateAmount
 			if combinations[i].Configuration[j].Group.Capacity < combinations[i].Configuration[j].CandidateAmount {
 				totalCapacity = totalCapacity + combinations[i].Configuration[j].Group.Capacity
-			}else{
+			} else {
 				totalCapacity = totalCapacity + combinations[i].Configuration[j].CandidateAmount
 			}
 		}
@@ -296,7 +296,6 @@ func (m *Matcher) CheckMatcher() (error, string) {
 	if foundErr {
 		return errors.New("combination_overfilled"), errString
 	}
-
 
 	//ceck for total person amount
 	var totalMin, totalCap int
@@ -334,7 +333,7 @@ func enoughCandidates(group *Group, persons []*Person) bool {
 //return number of assigned persons
 func (m *Matcher) numberAssigned() (n int) {
 	for i := range m.Groups {
-		n+=len(m.Groups[i].Members)
+		n += len(m.Groups[i].Members)
 	}
 	return
 }
@@ -352,10 +351,10 @@ func (m *Matcher) CalcQuote() (quote, percentage float64) {
 		}
 	}
 	if nMaxQuote == 0 {
-		return 0,0
+		return 0, 0
 	}
-	quote = 1 + float64(nQuote) / float64(nAssigned)
-	percentage = 100 * (1 - float64(nQuote) / float64(nMaxQuote))
+	quote = 1 + float64(nQuote)/float64(nAssigned)
+	percentage = 100 * (1 - float64(nQuote)/float64(nMaxQuote))
 	return
 }
 
@@ -372,8 +371,8 @@ func (m *Matcher) getHostGroup(p *Person) *Group {
 }
 
 //get maximum length of a persons Preferences
-func (m *Matcher)getMaxPref() (max int) {
-	for _,person := range m.Persons {
+func (m *Matcher) getMaxPref() (max int) {
+	for _, person := range m.Persons {
 		if max < len(person.Preferences) {
 			max = len(person.Preferences)
 		}
@@ -382,12 +381,12 @@ func (m *Matcher)getMaxPref() (max int) {
 }
 
 //orders the persons from many to few wishes
-func (m *Matcher) sortByPrefLen(){
+func (m *Matcher) sortByPrefLen() {
 	var persons []*Person
 	currLen := m.getMaxPref()
 	for currLen >= 0 {
-		for i := range m.Persons{
-			if currLen == len(m.Persons[i].Preferences){
+		for i := range m.Persons {
+			if currLen == len(m.Persons[i].Preferences) {
 				persons = append(persons, m.Persons[i])
 			}
 		}
@@ -397,7 +396,7 @@ func (m *Matcher) sortByPrefLen(){
 }
 
 //print groups (testing purpose)
-func (m *Matcher) printMatcher(){
+func (m *Matcher) printMatcher() {
 	q, p := m.CalcQuote()
 
 	fmt.Println()
@@ -405,12 +404,12 @@ func (m *Matcher) printMatcher(){
 	fmt.Println("Quote:\t", q, "( ~ ", p, " %)")
 	fmt.Println()
 
-	for i := 0;i < len(m.Groups);i++{
+	for i := 0; i < len(m.Groups); i++ {
 		fmt.Println()
 		fmt.Println("--------------------------------------------------------------------------------------")
-		fmt.Println("Gruppenname: ",m.Groups[i].Name, "\t( ", len(m.Groups[i].Members) ," )")
+		fmt.Println("Gruppenname: ", m.Groups[i].Name, "\t( ", len(m.Groups[i].Members), " )")
 		for j := 0; j < len(m.Groups[i].Members); j++ {
-			fmt.Println(j,"\t:\t\t", m.Groups[i].Members[j].Name, "\t (", m.Groups[i].Members[j].Preferences[0].Name, ")\t(", m.Groups[i].Members[j].Preferences[1].Name, ")\t(", m.Groups[i].Members[j].Preferences[0].Name, ")")
+			fmt.Println(j, "\t:\t\t", m.Groups[i].Members[j].Name, "\t (", m.Groups[i].Members[j].Preferences[0].Name, ")\t(", m.Groups[i].Members[j].Preferences[1].Name, ")\t(", m.Groups[i].Members[j].Preferences[0].Name, ")")
 		}
 	}
 }

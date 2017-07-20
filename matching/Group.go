@@ -41,7 +41,7 @@ func (g *Group) deletePerson(p *Person) {
 //adds a fitting person to the given group
 func (g *Group) insertBestFrom(candidates []*Person, m *Matcher) {
 	//searching with decreasing preference priority
-	for i := 0;i < 3;i++ {
+	for i := 0; i < 3; i++ {
 		//j := range candidates isn't possible because of changing slice length
 		for j := len(candidates) - 1; j >= 0; j-- {
 			if candidates[j].Preferences[i] == g {
@@ -53,7 +53,6 @@ func (g *Group) insertBestFrom(candidates []*Person, m *Matcher) {
 	}
 	return
 }
-
 
 func FindGroup(name string, groups []*Group) *Group {
 	for i := 0; i < len(groups); i++ {

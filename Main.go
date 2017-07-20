@@ -38,7 +38,6 @@ type Message struct {
 }
 
 //go:generate go-bindata static/... locales templates
-//go:generate rsrc -ico static/icon.ico -o FILE.syso
 //go:generate go-astilectron-bindata -c
 
 // map of all supported languages
