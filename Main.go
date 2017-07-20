@@ -22,13 +22,14 @@ import (
 	"strings"
 	"time"
 
+	"path"
+
 	"github.com/asticode/go-astilectron"
 	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/veecue/GroupMatcher/matching"
 	"github.com/veecue/GroupMatcher/parseInput"
 	"github.com/veecue/go-astilectron-bindata"
 	"golang.org/x/text/language"
-	"path"
 )
 
 type Message struct {
@@ -38,7 +39,7 @@ type Message struct {
 
 //go:generate go-bindata static/... locales templates
 //go:generate rsrc -ico static/icon.ico -o FILE.syso
-//go:generate go-astilectron-bindata
+//go:generate go-astilectron-bindata -c
 
 // map of all supported languages
 var langs map[language.Tag]map[string]string
@@ -167,9 +168,9 @@ func setDarkTheme(dark bool) {
 func openDoc() {
 	switch runtime.GOOS {
 	case "linux":
-		exec.Command("xdg-open", "https://github.com/veecue/GroupMatcher/blob/master/documentation/"+l["#name"]+".pdf").Start()
+		exec.Command("xdg-open", "https://github.com/veecue/GroupMatcher/tree/master/documentation/"+l["#name"]+".pdf").Start()
 	case "windows":
-		exec.Command("cmd", "/c", "start", "https://github.com/veecue/GroupMatcher/master/dev/documentation/"+l["#name"]+".pdf").Start()
+		exec.Command("cmd", "/c", "start", "https://github.com/veecue/GroupMatcher/tree/master/documentation/"+l["#name"]+".pdf").Start()
 	}
 }
 
