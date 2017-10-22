@@ -1,4 +1,4 @@
-# GroupMatcher
+# GroupMatcher [![Build Status](https://travis-ci.org/veecue/GroupMatcher.svg?branch=master)](https://travis-ci.org/veecue/GroupMatcher)
 
 ## Description
 

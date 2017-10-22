@@ -1,0 +1,18 @@
+language: go
+
+branches:
+    only:
+        - master
+        - dev
+
+go:
+  - 1.x
+  - master
+
+install:
+  - go get github.com/veecue/go-astilectron-bindata/...
+  - go generate
+
+script:
+  - go build -v -tags "pam"
+  - go test -v -cover -race
