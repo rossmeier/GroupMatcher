@@ -60,7 +60,7 @@
   "return": "Zurück",
   "hardtimeout": "Zeitüberschreitung - keine Lösung gefunden",
   "softtimeout": "Zeitüberschreitung - Lösung gefunden",
-  "abouttext": "Das Programm GroupMatcher, dass auf Go basiert, dient zur Verteilung von Personen auf Gruppen unter berücksichtigung ihrer Wünsche. Dabei können die Personen, die über Erst-, Zweit- und Drittwahl verfügen, auf eine beliebige Anzahl von Gruppen mit Minimal- und Maximalkapazität verteilt werden. Es wurde im Rahmen eines Q11 Informatik-Projekts von Justus Roßmeier, Christian Obermaier und Max Obermeier entwickelt.",
+  "abouttext": "Das Programm GroupMatcher, das auf Go basiert, dient zur Verteilung von Personen auf Gruppen unter Berücksichtigung ihrer Wünsche. Dabei können die Personen, die über Erst-, Zweit- und Drittwahl verfügen, auf eine beliebige Anzahl von Gruppen mit Minimal- und Maximalkapazität verteilt werden. Es wurde im Rahmen eines Q11 Informatik-Projekts von Justus Roßmeier, Christian Obermaier und Max Obermeier entwickelt.",
   "file": "Datei",
   "open": "Öffnen...",
   "save_as": "Speicher unter...",
