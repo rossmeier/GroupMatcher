@@ -24,11 +24,11 @@ import (
 
 	"path"
 
+	"github.com/asticode/go-astikit"
 	"github.com/asticode/go-astilectron"
-	"github.com/elazarl/go-bindata-assetfs"
+	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/veecue/GroupMatcher/matching"
 	"github.com/veecue/GroupMatcher/parseInput"
-	"github.com/veecue/go-astilectron-bindata"
 	"golang.org/x/text/language"
 )
 
@@ -38,7 +38,7 @@ type Message struct {
 }
 
 //go:generate go-bindata static/... locales templates
-//go:generate go-astilectron-bindata -c
+//DISABLED: go:generate go-astilectron-bindata -c
 
 // map of all supported languages
 var langs map[language.Tag]map[string]string
@@ -156,7 +156,7 @@ func setDarkTheme(dark bool) {
 		return
 	}
 	darktheme = dark
-	w.Send(struct {
+	w.SendMessage(struct {
 		Cmd string
 	}{
 		"reload",
@@ -424,7 +424,7 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 
 				// avoid loosing data on sudden exit with no path being provided
 				if projectPath == "" {
-					w.Send(struct {
+					w.SendMessage(struct {
 						Cmd string
 					}{"save_as"})
 				}
@@ -475,9 +475,9 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 		// provide hidden iframe for post forms to avoid reload via server handler
 		res.WriteString(`<iframe name="form" style="display:none"></iframe>`)
 		res.WriteString(`<form action="/?edit" method="POST" target="form">`)
-		res.WriteString(`<div class="header"><div class="switch"><button type="submit">` + l["assign"] + `</button><a onclick="astilectron.send('?edit')">` + l["edit"] + `</a></div></div>`)
+		res.WriteString(`<div class="header"><div class="switch"><button type="submit">` + l["assign"] + `</button><a onclick="astilectron.sendMessage('?edit')">` + l["edit"] + `</a></div></div>`)
 	} else {
-		res.WriteString(`<div class="header"><ul><li><a onclick="astilectron.send('/?reset')">` + l["reset"] + `</a></li><li><a onclick="astilectron.send('/?match')">` + l["match_selected"] + `</a></li></ul><div class="switch"><a onclick="astilectron.send('/')">` + l["assign"] + `</a><a class="inactive" onclick="astilectron.send('?edit')">` + l["edit"] + `</a></div></div>`)
+		res.WriteString(`<div class="header"><ul><li><a onclick="astilectron.sendMessage('/?reset')">` + l["reset"] + `</a></li><li><a onclick="astilectron.sendMessage('/?match')">` + l["match_selected"] + `</a></li></ul><div class="switch"><a onclick="astilectron.sendMessage('/')">` + l["assign"] + `</a><a class="inactive" onclick="astilectron.sendMessage('?edit')">` + l["edit"] + `</a></div></div>`)
 	}
 
 	// sidebar
@@ -540,7 +540,7 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 						res.WriteString(`<td>--------</td>`)
 					} else {
 						prefID := person.Preferences[i].IndexIn(groups)
-						res.WriteString(`<td><a onclick="astilectron.send('?person` + strconv.Itoa(person.IndexIn(persons)) + `&addto=` + strconv.Itoa(prefID) + `')" title="` + l["add_to_group"] + `">` + person.Preferences[i].StringWithSize() + `</a></td>`)
+						res.WriteString(`<td><a onclick="astilectron.sendMessage('?person` + strconv.Itoa(person.IndexIn(persons)) + `&addto=` + strconv.Itoa(prefID) + `')" title="` + l["add_to_group"] + `">` + person.Preferences[i].StringWithSize() + `</a></td>`)
 					}
 				}
 
@@ -568,9 +568,9 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 							prefID := pref.IndexIn(groups)
 							personID := person.IndexIn(persons)
 							if pref == group {
-								res.WriteString(`<td><a onclick="astilectron.send('/?person` + strconv.Itoa(personID) + `&delfrom=` + strconv.Itoa(i) + `&internalLink=#` + htmlid + `')" class="blue" title="` + l["rem_from_group"] + `">` + pref.StringWithSize() + `</a></td>`)
+								res.WriteString(`<td><a onclick="astilectron.sendMessage('/?person` + strconv.Itoa(personID) + `&delfrom=` + strconv.Itoa(i) + `&internalLink=#` + htmlid + `')" class="blue" title="` + l["rem_from_group"] + `">` + pref.StringWithSize() + `</a></td>`)
 							} else {
-								res.WriteString(`<td><a onclick="astilectron.send('/?person` + strconv.Itoa(personID) + `&delfrom=` + strconv.Itoa(i) + `&addto=` + strconv.Itoa(prefID) + `&internalLink=#` + htmlid + `')" title="` + l["add_to_group"] + `">` + pref.StringWithSize() + `</a></td>`)
+								res.WriteString(`<td><a onclick="astilectron.sendMessage('/?person` + strconv.Itoa(personID) + `&delfrom=` + strconv.Itoa(i) + `&addto=` + strconv.Itoa(prefID) + `&internalLink=#` + htmlid + `')" title="` + l["add_to_group"] + `">` + pref.StringWithSize() + `</a></td>`)
 							}
 						}
 					}
@@ -596,7 +596,7 @@ func handleChanges(form url.Values, data string, calledByForm bool) string {
 	if calledByForm {
 		sendBody(res.String())
 		for _, message := range messages {
-			w.Send(message)
+			w.SendMessage(message)
 		}
 	}
 
@@ -660,7 +660,7 @@ func updateBody() {
 }
 
 func sendBody(body string) {
-	w.Send(Message{
+	w.SendMessage(Message{
 		"body",
 		body,
 	})
@@ -746,7 +746,7 @@ func main() {
 	}
 
 	// Initialize astilectron
-	var a, _ = astilectron.New(astilectron.Options{
+	var a, _ = astilectron.New(log.New(os.Stderr, "", 0), astilectron.Options{
 		AppName:            "GroupMatcher",
 		AppIconDefaultPath: iconPngPath,
 		AppIconDarwinPath:  iconIcoPath,
@@ -754,7 +754,7 @@ func main() {
 	})
 	defer a.Close()
 
-	a.SetProvisioner(astilectron_bindata.NewProvisioner(Disembed))
+	//a.SetProvisioner(astilectron_bindata.NewProvisioner(Disembed))
 
 	a.HandleSignals()
 
@@ -775,9 +775,9 @@ func main() {
 
 	// Create a new window
 	w, err = a.NewWindow(urlString, &astilectron.WindowOptions{
-		Center: astilectron.PtrBool(true),
-		Height: astilectron.PtrInt(800),
-		Width:  astilectron.PtrInt(1200),
+		Center: astikit.BoolPtr(true),
+		Height: astikit.IntPtr(800),
+		Width:  astikit.IntPtr(1200),
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -793,15 +793,15 @@ func main() {
 	createMenu = func() {
 		m = w.NewMenu([]*astilectron.MenuItemOptions{
 			{
-				Label: astilectron.PtrStr(l["file"]),
+				Label: astikit.StrPtr(l["file"]),
 				SubMenu: []*astilectron.MenuItemOptions{
-					{Label: astilectron.PtrStr(l["open"]), OnClick: func(e astilectron.Event) bool {
-						w.Send(struct {
+					{Label: astikit.StrPtr(l["open"]), OnClick: func(e astilectron.Event) bool {
+						w.SendMessage(struct {
 							Cmd string
 						}{"openFile"})
 						return false
 					}},
-					{Label: astilectron.PtrStr(l["clear"]), OnClick: func(e astilectron.Event) bool {
+					{Label: astikit.StrPtr(l["clear"]), OnClick: func(e astilectron.Event) bool {
 						form, err := url.ParseQuery("clear")
 						if err != nil {
 							log.Fatal(err)
@@ -810,7 +810,7 @@ func main() {
 						sendBody(body)
 						return false
 					}},
-					{Label: astilectron.PtrStr(l["save"]), OnClick: func(e astilectron.Event) bool {
+					{Label: astikit.StrPtr(l["save"]), OnClick: func(e astilectron.Event) bool {
 
 						if projectPath != "" {
 							err := handleSaveAs(projectPath)
@@ -825,44 +825,44 @@ func main() {
 							}
 						}
 
-						w.Send(struct {
+						w.SendMessage(struct {
 							Cmd string
 						}{"save_as"})
 						return false
 					}},
-					{Label: astilectron.PtrStr(l["save_as"]), OnClick: func(e astilectron.Event) bool {
-						w.Send(struct {
+					{Label: astikit.StrPtr(l["save_as"]), OnClick: func(e astilectron.Event) bool {
+						w.SendMessage(struct {
 							Cmd string
 						}{"save_as"})
 						return false
 					}},
-					{Label: astilectron.PtrStr(l["export"]), SubMenu: []*astilectron.MenuItemOptions{
-						{Label: astilectron.PtrStr(l["exlimited"]), OnClick: func(e astilectron.Event) bool {
-							w.Send(struct {
+					{Label: astikit.StrPtr(l["export"]), SubMenu: []*astilectron.MenuItemOptions{
+						{Label: astikit.StrPtr(l["exlimited"]), OnClick: func(e astilectron.Event) bool {
+							w.SendMessage(struct {
 								Cmd string
 							}{"export_limited"})
 							return false
 						}},
-						{Label: astilectron.PtrStr(l["extotal"]), OnClick: func(e astilectron.Event) bool {
-							w.Send(struct {
+						{Label: astikit.StrPtr(l["extotal"]), OnClick: func(e astilectron.Event) bool {
+							w.SendMessage(struct {
 								Cmd string
 							}{"export_total"})
 							return false
 						}},
 					}},
-					{Label: astilectron.PtrStr(l["exit"]), Role: astilectron.MenuItemRoleQuit},
+					{Label: astikit.StrPtr(l["exit"]), Role: astilectron.MenuItemRoleQuit},
 				},
 			},
 			{
-				Label: astilectron.PtrStr(l["language"]),
+				Label: astikit.StrPtr(l["language"]),
 				SubMenu: func() []*astilectron.MenuItemOptions {
 					o := make([]*astilectron.MenuItemOptions, 0, len(langs))
 					for n, lang := range langs {
 						name := n
 						o = append(o, &astilectron.MenuItemOptions{
-							Label:   astilectron.PtrStr(lang["#name"]),
+							Label:   astikit.StrPtr(lang["#name"]),
 							Type:    astilectron.MenuItemTypeRadio,
-							Checked: astilectron.PtrBool(lang["#name"] == l["#name"]),
+							Checked: astikit.BoolPtr(lang["#name"] == l["#name"]),
 							OnClick: func(e astilectron.Event) bool {
 								l = langs[name]
 								go func() {
@@ -882,32 +882,32 @@ func main() {
 			},
 			{
 
-				Label: astilectron.PtrStr(l["theme"]),
+				Label: astikit.StrPtr(l["theme"]),
 				SubMenu: []*astilectron.MenuItemOptions{
-					{Label: astilectron.PtrStr(l["bright"]), Type: astilectron.MenuItemTypeRadio, Checked: astilectron.PtrBool(!darktheme), OnClick: func(e astilectron.Event) bool {
+					{Label: astikit.StrPtr(l["bright"]), Type: astilectron.MenuItemTypeRadio, Checked: astikit.BoolPtr(!darktheme), OnClick: func(e astilectron.Event) bool {
 						setDarkTheme(false)
 						return false
 					}},
-					{Label: astilectron.PtrStr(l["dark"]), Type: astilectron.MenuItemTypeRadio, Checked: astilectron.PtrBool(darktheme), OnClick: func(e astilectron.Event) bool {
+					{Label: astikit.StrPtr(l["dark"]), Type: astilectron.MenuItemTypeRadio, Checked: astikit.BoolPtr(darktheme), OnClick: func(e astilectron.Event) bool {
 						setDarkTheme(true)
 						return false
 					}},
 				},
 			},
 			{
-				Label: astilectron.PtrStr(l["help"]),
+				Label: astikit.StrPtr(l["help"]),
 				SubMenu: []*astilectron.MenuItemOptions{
-					{Label: astilectron.PtrStr(l["help"]), Role: astilectron.MenuItemRoleHelp, OnClick: func(e astilectron.Event) bool {
+					{Label: astikit.StrPtr(l["help"]), Role: astilectron.MenuItemRoleHelp, OnClick: func(e astilectron.Event) bool {
 						openDoc()
 						return false
 					}},
-					{Label: astilectron.PtrStr(l["about"]), Role: astilectron.MenuItemRoleAbout, OnClick: func(e astilectron.Event) bool {
+					{Label: astikit.StrPtr(l["about"]), Role: astilectron.MenuItemRoleAbout, OnClick: func(e astilectron.Event) bool {
 						go func() {
 							aboutWindow, err := a.NewWindow(urlString+"/about", &astilectron.WindowOptions{
-								Center:    astilectron.PtrBool(true),
-								Width:     astilectron.PtrInt(900),
-								Height:    astilectron.PtrInt(450),
-								Resizable: astilectron.PtrBool(false),
+								Center:    astikit.BoolPtr(true),
+								Width:     astikit.IntPtr(900),
+								Height:    astikit.IntPtr(450),
+								Resizable: astikit.BoolPtr(false),
 							})
 							if err != nil {
 								log.Fatal(err)
@@ -927,9 +927,9 @@ func main() {
 	createMenu()
 
 	// Listen to messages sent by webserver
-	w.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) (deleteListener bool) {
+	w.OnMessage(func(e *astilectron.EventMessage) interface{} {
 		var msg string
-		err := e.Message.Unmarshal(&msg)
+		err := e.Unmarshal(&msg)
 		if err != nil {
 			log.Println(err)
 		}
@@ -948,10 +948,10 @@ func main() {
 
 		// send other messages
 		for _, message := range messages {
-			w.Send(message)
+			w.SendMessage(message)
 		}
 
-		return
+		return nil
 	})
 
 	a.Wait()

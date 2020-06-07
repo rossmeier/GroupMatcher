@@ -13,6 +13,8 @@
 		<script src="static/jquery-3.1.1.js"></script>
 		<script src="static/jquery-linedtextarea/jquery-linedtextarea.js"></script>
 		<script>
+			const { dialog } = require('electron').remote
+
 			function lined() {
                 // reload any linedtextareas
 				var box = $("#edit")
@@ -24,24 +26,35 @@
             // This will wait for the astilectron namespace to be ready
             document.addEventListener('astilectron-ready', function() {
                 // This will listen to messages sent by GO
-                astilectron.listen(function(message) {
+                astilectron.onMessage(function(message) {
                     switch (message.Cmd) {
                         case "body":
                             document.body.innerHTML = message.Body;
 							lined();
                             break;
-                        case "openFile":
-                            astilectron.showOpenDialog({filters:[{name: 'Group Matcher (*.gm)', extensions: ['gm']}]}, function(e){astilectron.send("?import=" + encodeURI(e))})
+                        case "openFile": {
+                            dialog.showOpenDialog({filters:[{name: 'Group Matcher (*.gm)', extensions: ['gm']}]})
+								.then(function(e) {
+									console.log(e);
+									astilectron.sendMessage("?import=" + encodeURI(e.filePaths[0]));
+								})
 							break;
-						case "save_as":
-							astilectron.showSaveDialog({filters:[{name: 'Group Matcher (*.gm)', extensions: ['gm']}]}, function(e){astilectron.send("?save_as=" + encodeURI(e))})
+						}
+						case "save_as": {
+							dialog.showSaveDialog({filters:[{name: 'Group Matcher (*.gm)', extensions: ['gm']}]})
+								.then(function(e){astilectron.sendMessage("?save_as=" + encodeURI(e.filePath))});
 							break;
-						case "export_limited":
-							astilectron.showSaveDialog({filters:[{name: 'Group Matcher (*.xlsx)', extensions: ['xlsx']}]}, function(e){astilectron.send("?export_limited=" + encodeURI(e))})
+						}
+						case "export_limited": {
+							dialog.showSaveDialog({filters:[{name: 'Group Matcher (*.xlsx)', extensions: ['xlsx']}]})
+								.then(function(e){astilectron.sendMessage("?export_limited=" + encodeURI(e.filePath))})
 							break;
-						case "export_total":
-							astilectron.showSaveDialog({filters:[{name: 'Group Matcher (*.xlsx)', extensions: ['xlsx']}]}, function(e){astilectron.send("?export_total=" + encodeURI(e))})
+						}
+						case "export_total": {
+							dialog.showSaveDialog({filters:[{name: 'Group Matcher (*.xlsx)', extensions: ['xlsx']}]})
+								.then(function(e){astilectron.sendMessage("?export_total=" + encodeURI(e.filePath))});
 							break;
+						}
 						case "internalLink":
 							window.location.href = "/" + message.Body;
 							break;
